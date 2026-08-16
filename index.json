@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Mangago",
+    "lang": "en",
+    "baseUrl": "https://www.mangago.me",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangago.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/mangago.js"
+  }
+]
