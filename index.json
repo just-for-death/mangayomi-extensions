@@ -1,5 +1,16 @@
 [
   {
+    "name": "MangaFreak",
+    "lang": "en",
+    "baseUrl": "https://ww3.mangafreak.me",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangafreak.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.1.0",
+    "pkgPath": "javascript/manga/src/en/mangafreak.js"
+  },
+  {
     "name": "Mangago",
     "lang": "en",
     "baseUrl": "https://www.mangago.me",
@@ -9,5 +20,60 @@
     "itemType": 0,
     "version": "1.0.0",
     "pkgPath": "javascript/manga/src/en/mangago.js"
+  },
+  {
+    "name": "MangaHere",
+    "lang": "en",
+    "baseUrl": "https://www.mangahere.cc",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangahere.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/mangahere.js"
+  },
+  {
+    "name": "Mangapill",
+    "lang": "en",
+    "baseUrl": "https://mangapill.com",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangapill.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/mangapill.js"
+  },
+  {
+    "name": "ReadComicOnline",
+    "lang": "en",
+    "baseUrl": "https://readcomicsonline.ru",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/dart/manga/multisrc/mmrcms/src/en/readcomicsonline/icon.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.1.0",
+    "pkgPath": "javascript/manga/src/en/read_comics_online.js"
+  },
+  {
+    "name": "Webtoons",
+    "lang": "en",
+    "baseUrl": "https://www.webtoons.com",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.webtoons.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/webtoons.js"
+  },
+  {
+    "name": "Weeb Central",
+    "lang": "en",
+    "baseUrl": "https://weebcentral.com",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.weebcentral.png",
+    "typeSource": "single",
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/weeb_central.js"
   }
 ]

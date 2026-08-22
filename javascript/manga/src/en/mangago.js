@@ -7,7 +7,7 @@ const mangayomiSources = [{
     "typeSource": "single",
     "itemType": 0,
     "version": "1.0.0",
-    "pkgPath": "javascript/manga/src/en/mangago.js"
+    "pkgPath": "manga/src/en/mangago.js"
 }];
 
 class DefaultExtension extends MProvider {
@@ -28,13 +28,13 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
-        const items = doc.querySelectorAll(".pic_list .flex1.listitem") || doc.querySelectorAll("#information li");
+        const items = doc.querySelectorAll(".updatesli") || doc.querySelectorAll(".flex1.listitem") || doc.querySelectorAll("#information li");
 
         for (const item of items) {
-            const a = item.querySelector("a.thm-effect") || item.querySelector("a");
+            const a = item.querySelector("a.thm-effect") || item.querySelector("span.title a") || item.querySelector("a");
             const img = item.querySelector("img");
             if (a) {
-                const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
+                const title = a.attr("title") || a.attr("alt") || (img ? img.attr("alt") : "") || a.text;
                 const link = a.attr("href");
                 const imageUrl = img ? (img.attr("data-src") || img.attr("src")) : "";
                 if (title && link) {
