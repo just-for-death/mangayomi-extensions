@@ -18,6 +18,8 @@ https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/index
 | **Mangago** | EN | `https://www.mangago.me` | Popular, Latest Updates, Search, Cloudflare Bypass |
 | **MangaHere** | EN | `https://www.mangahere.cc` | Popular, Latest, Search, Chapter Reader |
 | **Mangapill** | EN | `https://mangapill.com` | Popular, Latest Updates, Search, High-Res Reader |
+| **nHentai.com (unoriginal)** | EN | `https://nhentai.net` | Popular, Latest, Search, High-Res Gallery Reader |
+| **NineHentai** | EN | `https://ninehentai.to` | Popular API, Latest, Search, Direct CDN Reader |
 | **ReadComicOnline** | EN | `https://readcomicsonline.ru` | Top Views, Latest Releases, Instant Search API, Comics Reader |
 | **Webtoons** | EN | `https://www.webtoons.com` | Daily Schedules, Top Rankings, Genre Browse, Webtoon Reader |
 | **Weeb Central** | EN | `https://weebcentral.com` | Popular, Latest, Filtered Search, Reader |

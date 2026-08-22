@@ -44,6 +44,30 @@
     "pkgPath": "javascript/manga/src/en/mangapill.js"
   },
   {
+    "name": "nHentai.com (unoriginal)",
+    "lang": "en",
+    "baseUrl": "https://nhentai.net",
+    "apiUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/all.nhentai.png",
+    "typeSource": "single",
+    "isNsfw": true,
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/nhentai.js"
+  },
+  {
+    "name": "NineHentai",
+    "lang": "en",
+    "baseUrl": "https://ninehentai.to",
+    "apiUrl": "https://api.ninehentai.to",
+    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.ninehentai.png",
+    "typeSource": "single",
+    "isNsfw": true,
+    "itemType": 0,
+    "version": "1.0.0",
+    "pkgPath": "javascript/manga/src/en/ninehentai.js"
+  },
+  {
     "name": "ReadComicOnline",
     "lang": "en",
     "baseUrl": "https://readcomicsonline.ru",
