@@ -7,8 +7,8 @@ const mangayomiSources = [{
     "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://weebcentral.com",
     "typeSource": "single",
     "itemType": 0,
-    "version": "0.1.0",
-    "pkgPath": "manga/src/en/weebcentral.js"
+    "version": "1.0.1",
+    "pkgPath": "javascript/manga/src/en/weeb_central.js"
 }];
 
 class DefaultExtension extends MProvider {
@@ -21,62 +21,69 @@ class DefaultExtension extends MProvider {
     }
 
     async request(slug) {
-        var url = `${this.source.baseUrl}${slug}`
-        var res = await this.client.get(url);
+        var clean = slug.startsWith('http') ? slug : `${this.source.baseUrl}${slug.startsWith('/') ? slug : '/' + slug}`;
+        var res = await this.client.get(clean);
         return new Document(res.body);
     }
-
 
     async getPopular(page) {
         const filters = this.getFilterList();
         filters[0].state = 2;
-        return await this.search("", page, filters)
+        return await this.search("", page, filters);
     }
 
     async getLatestUpdates(page) {
         const filters = this.getFilterList();
         filters[0].state = 5;
-        return await this.search("", page, filters)
+        return await this.search("", page, filters);
     }
 
     getImageUrl(id) { return `https://temp.compsci88.com/cover/normal/${id}.webp`; }
 
     async search(query, page, filters) {
-        var offset = 32 * (parseInt(page) - 1)
-        var sort = filters[0].values[filters[0].state].value
-        var order = filters[1].values[filters[1].state].value
-        var translation = filters[2].values[filters[2].state].value
-        var status = ""
-        for (var filter of filters[3].state) {
-            if (filter.state == true)
-                status += `&included_status=${filter.value}`
+        var offset = 32 * (parseInt(page) - 1);
+        var sort = filters && filters[0] && filters[0].values ? filters[0].values[filters[0].state].value : "Best Match";
+        var order = filters && filters[1] && filters[1].values ? filters[1].values[filters[1].state].value : "Ascending";
+        var translation = filters && filters[2] && filters[2].values ? filters[2].values[filters[2].state].value : "Any";
+        var status = "";
+        if (filters && filters[3] && filters[3].state) {
+            for (var filter of filters[3].state) {
+                if (filter.state == true) status += `&included_status=${filter.value}`;
+            }
         }
-        var type = ""
-        for (var filter of filters[4].state) {
-            if (filter.state == true)
-                type += `&included_type=${filter.value}`
+        var type = "";
+        if (filters && filters[4] && filters[4].state) {
+            for (var filter of filters[4].state) {
+                if (filter.state == true) type += `&included_type=${filter.value}`;
+            }
         }
-        var tags = ""
-        for (var filter of filters[5].state) {
-            if (filter.state == true)
-                tags += `&included_tag=${filter.value}`
+        var tags = "";
+        if (filters && filters[5] && filters[5].state) {
+            for (var filter of filters[5].state) {
+                if (filter.state == true) tags += `&included_tag=${filter.value}`;
+            }
         }
-        var slug = `/search/data?limit=32&offset=${offset}&author=&text=${query}&sort=${sort}&order=${order}&official=${translation}${status}${type}${tags}&display_mode=Full%20Display`
+        var slug = `/search/data?limit=32&offset=${offset}&author=&text=${encodeURIComponent(query)}&sort=${sort}&order=${order}&official=${translation}${status}${type}${tags}&display_mode=Full%20Display`;
         var doc = await this.request(slug);
         var list = [];
-        var mangaElements = doc.select("article:has(section)")
+        var mangaElements = doc.select("article:has(section)");
         for (var manga of mangaElements) {
-            var imageUrl = manga.selectFirst("img").getSrc;
+            var imgEl = manga.selectFirst("img");
+            var imageUrl = imgEl ? imgEl.getSrc : "";
             var details = manga.selectFirst("section > a");
-            var link = details.getHref;
-            var name = manga.selectFirst("article > div > div > div").text;
-            list.push({ name, imageUrl, link });
+            var link = details ? details.getHref : "";
+            var nameEl = manga.selectFirst("article > div > div > div");
+            var name = nameEl ? nameEl.text.trim() : "";
+            if (name && link) {
+                list.push({ name, imageUrl, link });
+            }
         }
 
-        var hasNextPage = doc.selectFirst("button").text.length > 0;
-        return { list, hasNextPage }
-
+        var btn = doc.selectFirst("button");
+        var hasNextPage = btn ? btn.text.length > 0 : false;
+        return { list, hasNextPage };
     }
+
     statusCode(status) {
         return {
             "Ongoing": 0,
@@ -87,146 +94,124 @@ class DefaultExtension extends MProvider {
     }
 
     async getDetail(url) {
-        var urlSplits = url.split("/");
-        var link = urlSplits[urlSplits.length - 2];
-        var slug = url.startsWith("http") ? `/series/${link}` : `/series/${url}`;
+        var cleanPath = url.replace(/^https?:\/\/[^\/]+/, '');
+        if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+        var slug = cleanPath.startsWith('/series/') ? cleanPath : '/series' + cleanPath;
+        var linkMatch = slug.match(/\/series\/([^\/]+)/);
+        var link = linkMatch ? linkMatch[1] : slug.replace('/series/', '');
+
         var doc = await this.request(slug);
-        var imageUrl = url.startsWith("http") ? this.getImageUrl(link) : this.getImageUrl(url);
-        var description = doc.selectFirst("p.whitespace-pre-wrap.break-words").text
+        var imageUrl = this.getImageUrl(link);
+        var descEl = doc.selectFirst("p.whitespace-pre-wrap.break-words");
+        var description = descEl ? descEl.text.trim() : "";
 
-        var chapters = []
-        var ul = doc.select("ul.flex.flex-col.gap-4 > li")
-        var author = ""
-        var genre = []
-        var status = 5
+        var chapters = [];
+        var ul = doc.select("ul.flex.flex-col.gap-4 > li");
+        var author = "";
+        var genre = [];
+        var status = 5;
         for (var li of ul) {
-            var strongTxt = li.selectFirst("strong").text
+            var strong = li.selectFirst("strong");
+            if (!strong) continue;
+            var strongTxt = strong.text;
             if (strongTxt.indexOf("Author(s):") != -1) {
-                author = li.selectFirst("a").text
+                var aEl = li.selectFirst("a");
+                author = aEl ? aEl.text.trim() : "";
             } else if (strongTxt.indexOf("Tags(s):") != -1) {
-                li.select("a").forEach(a => genre.push(a.text))
+                li.select("a").forEach(a => genre.push(a.text.trim()));
             } else if (strongTxt.indexOf("Status:") != -1) {
-                status = this.statusCode(li.selectFirst("a").text)
+                var sEl = li.selectFirst("a");
+                status = this.statusCode(sEl ? sEl.text.trim() : "");
             }
-
         }
 
-        var chapSlug = `${slug}/full-chapter-list`
-        doc = await this.request(chapSlug);
-        var chapList = doc.select("div.flex.items-center");
+        var chapSlug = `${slug}/full-chapter-list`;
+        var chapDoc = await this.request(chapSlug);
+        var chapList = chapDoc.select("div.flex.items-center");
         for (var chap of chapList) {
-            var name = chap.selectFirst("span.grow.flex.items-center.gap-2").selectFirst("span").text
-            var dateUpload = new Date(chap.selectFirst("time.text-datetime").text).valueOf().toString()
-            var url = chap.selectFirst("input").attr("value")
-            chapters.push({ name, url, dateUpload })
+            var spanEl = chap.selectFirst("span.grow.flex.items-center.gap-2");
+            var innerSpan = spanEl ? spanEl.selectFirst("span") : null;
+            var name = innerSpan ? innerSpan.text.trim() : "Chapter";
+            var timeEl = chap.selectFirst("time.text-datetime");
+            var dateUpload = timeEl ? new Date(timeEl.text).valueOf().toString() : "";
+            var inputEl = chap.selectFirst("input");
+            var chapUrl = inputEl ? inputEl.attr("value") : "";
+            if (chapUrl) {
+                chapters.push({ name, url: chapUrl, dateUpload });
+            }
         }
-        return { description, imageUrl, author, genre, status, chapters }
-
+        return { description, imageUrl, author, genre, status, chapters };
     }
+
     async getPageList(url) {
-        var slug = `/chapters/${url}/images?current_page=1&reading_style=long_strip`
+        var clean = url.replace(/^https?:\/\/[^\/]+/, '');
+        var chapMatch = clean.match(/\/chapters\/([^\/]+)/);
+        var chapId = chapMatch ? chapMatch[1] : clean.replace(/.*chapters\//, '').replace(/\/.*$/, '').trim();
+        var slug = `/chapters/${chapId}/images?current_page=1&reading_style=long_strip`;
         var doc = await this.request(slug);
 
         var urls = [];
+        doc.select("section > img").forEach(page => {
+            var src = page.attr("src");
+            if (src) urls.push(src);
+        });
 
-        doc.select("section > img").forEach(page => urls.push(page.attr("src")))
-
-        return urls.map(x => ({ url: x, headers: { Referer: `${this.source.baseUrl}/`, Accept: "image/avif,image/webp,*/*", Host: `${x.match(/^(?:https?:\/\/)?([^\/:]+)(:\d+)?/)[1]}` } }));
+        return urls.map(x => ({ url: x, headers: { Referer: `${this.source.baseUrl}/` } }));
     }
-
 
     getFilterList() {
         return [
             {
                 type_name: "SelectFilter",
+                name: "Order By",
+                state: 0,
+                values: [
+                    { type_name: "SelectOption", name: "Best Match", value: "Best Match" },
+                    { type_name: "SelectOption", name: "Alphabet", value: "Alphabet" },
+                    { type_name: "SelectOption", name: "Popularity", value: "Popularity" },
+                    { type_name: "SelectOption", name: "Subscribers", value: "Subscribers" },
+                    { type_name: "SelectOption", name: "Recently Added", value: "Recently Added" },
+                    { type_name: "SelectOption", name: "Latest Updates", value: "Latest Updates" }
+                ]
+            },
+            {
+                type_name: "SelectFilter",
                 name: "Sort",
-                state: 0,
+                state: 1,
                 values: [
-                    ["Best Match", "Best Match"],
-                    ["Alphabet", "Alphabet"],
-                    ["Popularity", "Popularity"],
-                    ["Subscribers", "Subscribers"],
-                    ["Recently Added", "Recently Added"],
-                    ["Latest Updates", "Latest Updates"]
-                ].map(x => ({ type_name: 'SelectOption', name: x[0], value: x[1] }))
-            }, {
+                    { type_name: "SelectOption", name: "Ascending", value: "Ascending" },
+                    { type_name: "SelectOption", name: "Descending", value: "Descending" }
+                ]
+            },
+            {
                 type_name: "SelectFilter",
-                name: "Order",
+                name: "Translation",
                 state: 0,
                 values: [
-                    ["Ascending", "Ascending"],
-                    ["Descending", "Descending"]
-                ].map(x => ({ type_name: 'SelectOption', name: x[0], value: x[1] }))
-            }, {
-                type_name: "SelectFilter",
-                name: "Official Translation",
-                state: 0,
-                values: [
-                    ["Any", "Any"],
-                    ["True", "True"],
-                    ["False", "False"],
-                ].map(x => ({ type_name: 'SelectOption', name: x[0], value: x[1] }))
-            }, {
+                    { type_name: "SelectOption", name: "Any", value: "Any" },
+                    { type_name: "SelectOption", name: "Official Only", value: "Official Only" },
+                    { type_name: "SelectOption", name: "Non-Official Only", value: "Non-Official Only" }
+                ]
+            },
+            {
                 type_name: "GroupFilter",
-                name: "Series Status",
+                name: "Status",
                 state: [
-                    ["Ongoing", "Ongoing"],
-                    ["Complete", "Complete"],
-                    ["Hiatus", "Hiatus"],
-                    ["Canceled", "Canceled"],
-                ].map(x => ({ type_name: 'CheckBox', name: x[0], value: x[1] }))
-            }, {
+                    { type_name: "CheckBox", name: "Complete", value: "Complete" },
+                    { type_name: "CheckBox", name: "Ongoing", value: "Ongoing" },
+                    { type_name: "CheckBox", name: "Canceled", value: "Canceled" },
+                    { type_name: "CheckBox", name: "Hiatus", value: "Hiatus" }
+                ]
+            },
+            {
                 type_name: "GroupFilter",
-                name: "Series Type",
+                name: "Type",
                 state: [
-                    ["Manga", "Manga"],
-                    ["Manhwa", "Manhwa"],
-                    ["Manhua", "Manhua"],
-                    ["OEL", "OEL"],
-                ].map(x => ({ type_name: 'CheckBox', name: x[0], value: x[1] }))
-            }, {
-                type_name: "GroupFilter",
-                name: "Tags",
-                state: [
-                    ["Action", "Action"],
-                    ["Adventure", "Adventure"],
-                    ["Adult", "Adult"],
-                    ["Comedy", "Comedy"],
-                    ["Doujinshi", "Doujinshi"],
-                    ["Drama", "Drama"],
-                    ["Ecchi", "Ecchi"],
-                    ["Fantasy", "Fantasy"],
-                    ["Gender Bender", "Gender Bender"],
-                    ["Harem", "Harem"],
-                    ["Hentai", "Hentai"],
-                    ["Historical", "Historical"],
-                    ["Horror", "Horror"],
-                    ["Isekai", "Isekai"],
-                    ["Josei", "Josei"],
-                    ["Lolicon", "Lolicon"],
-                    ["Martial Arts", "Martial Arts"],
-                    ["Mature", "Mature"],
-                    ["Mecha", "Mecha"],
-                    ["Mystery", "Mystery"],
-                    ["Psychological", "Psychological"],
-                    ["Romance", "Romance"],
-                    ["School Life", "School Life"],
-                    ["Sci-Fi", "Sci-Fi"],
-                    ["Seinen", "Seinen"],
-                    ["Shotacon", "Shotacon"],
-                    ["Shoujo", "Shoujo"],
-                    ["Shoujo Ai", "Shoujo Ai"],
-                    ["Shounen", "Shounen"],
-                    ["Slice of Life", "Slice of Life"],
-                    ["Smut", "Smut"],
-                    ["Sports", "Sports"],
-                    ["Supernatural", "Supernatural"],
-                    ["Tragedy", "Tragedy"],
-                    ["Yaoi", "Yaoi"],
-                    ["Yuri", "Yuri"],
-                    ["Other", "Other"]
-                ].map(x => ({ type_name: 'CheckBox', name: x[0], value: x[1] }))
+                    { type_name: "CheckBox", name: "Manga", value: "Manga" },
+                    { type_name: "CheckBox", name: "Manhwa", value: "Manhwa" },
+                    { type_name: "CheckBox", name: "Manhua", value: "Manhua" }
+                ]
             }
-        ]
+        ];
     }
 }
