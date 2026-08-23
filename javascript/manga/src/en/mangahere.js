@@ -36,11 +36,13 @@ class DefaultExtension extends MProvider {
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
                 const link = a.attr("href");
-                const imageUrl = img ? (img.attr("src") || img.attr("data-src")) : "";
+                var imageUrl = img ? (img.attr("src") || img.attr("data-src") || "") : "";
+                if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
+                imageUrl = imageUrl.replace(/&amp;/g, '&');
                 if (title && link && link.indexOf('/manga/') !== -1) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+                        imageUrl: imageUrl,
                         link: link.startsWith('http') ? link : `https://fanfox.net${link}`
                     });
                 }
@@ -66,11 +68,13 @@ class DefaultExtension extends MProvider {
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
                 const link = a.attr("href");
-                const imageUrl = img ? (img.attr("src") || img.attr("data-src")) : "";
+                var imageUrl = img ? (img.attr("src") || img.attr("data-src") || "") : "";
+                if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
+                imageUrl = imageUrl.replace(/&amp;/g, '&');
                 if (title && link && link.indexOf('/manga/') !== -1) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+                        imageUrl: imageUrl,
                         link: link.startsWith('http') ? link : `https://fanfox.net${link}`
                     });
                 }
@@ -96,11 +100,13 @@ class DefaultExtension extends MProvider {
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
                 const link = a.attr("href");
-                const imageUrl = img ? (img.attr("src") || img.attr("data-src")) : "";
+                var imageUrl = img ? (img.attr("src") || img.attr("data-src") || "") : "";
+                if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
+                imageUrl = imageUrl.replace(/&amp;/g, '&');
                 if (title && link) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+                        imageUrl: imageUrl,
                         link: link.startsWith('http') ? link : `https://fanfox.net${link}`
                     });
                 }
@@ -129,6 +135,7 @@ class DefaultExtension extends MProvider {
         const imgElem = doc.querySelector(".detail-info-cover-img");
         var imageUrl = imgElem ? (imgElem.attr("src") || imgElem.attr("data-src") || "") : "";
         if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
+        imageUrl = imageUrl.replace(/&amp;/g, '&');
 
         const authorElem = doc.querySelector(".detail-info-right-say a, a[href*='/author/']");
         const author = authorElem ? authorElem.text : "";
