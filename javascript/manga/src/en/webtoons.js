@@ -184,28 +184,22 @@ class DefaultExtension extends MProvider {
 
     parsePageEpisodes(doc);
 
-    // Fetch remaining pages if pagination exists
-    const maxPageEls = doc.select(".paginate a, .paginate span");
-    let maxPages = 1;
-    if (maxPageEls && maxPageEls.length > 0) {
-      for (const p of maxPageEls) {
-        const pNum = parseInt(p.text.trim());
-        if (!isNaN(pNum) && pNum > maxPages) {
-          maxPages = pNum;
-        }
-      }
-    }
-
-    if (maxPages > 1) {
-      for (let p = 2; p <= Math.min(maxPages, 100); p++) {
-        try {
-          const pUrl = `${url}${url.includes('?') ? '&' : '?'}page=${p}`;
-          const pRes = await new Client().get(pUrl, this.getHeaders(pUrl));
-          const pDoc = new Document(pRes.body);
-          parsePageEpisodes(pDoc);
-        } catch (_) {
+    // Fetch remaining episode pages until the end of the series
+    let p = 2;
+    while (p <= 200) {
+      try {
+        const pUrl = `${url}${url.includes('?') ? '&' : '?'}page=${p}`;
+        const pRes = await new Client().get(pUrl, this.getHeaders(pUrl));
+        const pDoc = new Document(pRes.body);
+        const countBefore = chapters.length;
+        parsePageEpisodes(pDoc);
+        if (chapters.length === countBefore) {
+          // No more episodes on this page -> reached the end of the series
           break;
         }
+        p++;
+      } catch (_) {
+        break;
       }
     }
 
