@@ -39,13 +39,20 @@ class DefaultExtension extends MProvider {
 
   mangaFromElement(doc) {
     const list = [];
+    const seen = new Set();
     for (const el of doc.select(
-      `div.webtoon_list_wrap li a, ul.webtoon_list li a`,
+      `div.webtoon_list_wrap li a, ul.webtoon_list li a, ul.card_lst li a, a[href*='title_no=']`,
     )) {
-      const imageUrl = el.selectFirst("img").getSrc;
-      const name = el.selectFirst("strong.title").text;
-      const link = el.getHref;
-      list.push({ name, imageUrl, link });
+      const img = el.selectFirst("img");
+      if (!img) continue;
+      const imageUrl = img.getSrc || img.attr("src") || "";
+      const titleEl = el.selectFirst("strong.title, p.subj, .subj, strong, p.title");
+      const name = titleEl ? titleEl.text.trim() : "";
+      const link = el.getHref || el.attr("href") || "";
+      if (name && link && !seen.has(link)) {
+        seen.add(link);
+        list.push({ name, imageUrl, link });
+      }
     }
 
     return list;
@@ -76,16 +83,18 @@ class DefaultExtension extends MProvider {
   }
 
   async search(query, page, filters) {
-    const keyword = query.trim().replace(/\s+/g, "+");
+    const keyword = (query || "").trim().replace(/\s+/g, "+");
     let url = `${this.getBaseUrl()}/${this.langCode()}`;
     let hasNextPage = false;
 
     const getFilterValue = (type, defaultValue = "") => {
+      if (!filters || !Array.isArray(filters)) return defaultValue;
       const filter = filters.find((f) => f.type === type);
       return filter?.values?.[filter.state]?.value ?? defaultValue;
     };
-    if (query) {
-      url += `/search/${getFilterValue("searchType")}?keyword=${keyword}&page=${page}`;
+    if (keyword) {
+      const searchType = getFilterValue("searchType");
+      url += searchType ? `/search/${searchType}?keyword=${keyword}&page=${page}` : `/search?keyword=${keyword}&page=${page}`;
     } else {
       const sortOrder = getFilterValue("sortOrder");
       const rankingType = getFilterValue("rankingType");
@@ -93,7 +102,6 @@ class DefaultExtension extends MProvider {
       const genreType = getFilterValue("genre");
 
       if (rankingType) {
-        // const genreParam = genreType ? `&subTabGenreCode=${genreType}` : "";
         url += `/ranking/${rankingType}`;
       } else if (weekday) {
         url += `/originals/${weekday}?sortOrder=${sortOrder}`;
@@ -105,7 +113,7 @@ class DefaultExtension extends MProvider {
     const res = await new Client().get(url);
     const doc = new Document(res.body);
     const list = this.mangaFromElement(doc);
-    if (query) {
+    if (keyword) {
       hasNextPage = list.length !== 0;
     }
 

@@ -69,12 +69,13 @@ class DefaultExtension extends MProvider {
         var mangaElements = doc.select("article:has(section)");
         for (var manga of mangaElements) {
             var imgEl = manga.selectFirst("img");
-            var imageUrl = imgEl ? imgEl.getSrc : "";
+            var imageUrl = imgEl ? (imgEl.attr("src") || imgEl.getSrc || "") : "";
             var details = manga.selectFirst("section > a");
-            var link = details ? details.getHref : "";
-            var nameEl = manga.selectFirst("article > div > div > div");
-            var name = nameEl ? nameEl.text.trim() : "";
-            if (name && link) {
+            var rawLink = details ? (details.attr("href") || details.getHref || "") : "";
+            var link = rawLink.startsWith("http") ? rawLink : `${this.source.baseUrl}${rawLink.startsWith('/') ? rawLink : '/' + rawLink}`;
+            var nameEl = manga.selectFirst("article > div > div > div, a.link");
+            var name = nameEl ? nameEl.text.trim() : (details ? details.text.trim() : "");
+            if (name && rawLink) {
                 list.push({ name, imageUrl, link });
             }
         }
@@ -167,12 +168,12 @@ class DefaultExtension extends MProvider {
         var chapId = chapMatch ? chapMatch[1] : clean.replace(/.*chapters\//, '').replace(/\/.*$/, '').trim();
         if (!chapId) return [];
 
-        var slug = `/chapters/${chapId}/images?current_page=1&reading_style=long_strip`;
+        var slug = `/chapters/${chapId}/images?is_prev=False&current_page=1&reading_style=long_strip`;
         var doc = await this.request(slug);
 
         var urls = [];
         // Try all common image selectors — confirmed working via FlareSolverr tests
-        var images = doc.select("#chapter-images img, section#chapter-images img, img[src*='compsci88'], img[src*='lowee'], img[src*='weebcentral']");
+        var images = doc.select("section[id*='chapter'] img, #chapter-images img, section#chapter-images img, img[src*='lastation'], img[src*='scans'], img[src*='compsci88'], img[src*='lowee'], img[src*='weebcentral'], img[src*='/manga/']");
         // If no specific selector found, fall back to all imgs in body
         if (images.length === 0) {
             images = doc.select("body img[src]");
@@ -180,7 +181,7 @@ class DefaultExtension extends MProvider {
         for (var page of images) {
             var src = page.attr("src") || page.attr("data-src") || page.getSrc || "";
             src = src.trim();
-            if (src && src.startsWith("http") && !urls.includes(src)) urls.push(src);
+            if (src && src.startsWith("http") && !src.includes("brand.png") && !src.includes("logo") && !src.includes("404.png") && !urls.includes(src)) urls.push(src);
         }
 
         return urls.map(x => ({ url: x, headers: { Referer: `${this.source.baseUrl}/` } }));

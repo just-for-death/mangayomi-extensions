@@ -129,7 +129,7 @@ class DefaultExtension extends MProvider {
         }
 
         // Normal text search
-        const url = `${this.source.baseUrl}/Search/${encodeURIComponent(query)}`;
+        const url = `${this.source.baseUrl}/Find/${encodeURIComponent(query)}`;
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
@@ -170,8 +170,7 @@ class DefaultExtension extends MProvider {
         const imageUrl = img ? (img.attr("src") || img.attr("data-src")) : "";
 
         const chapters = [];
-        // ww3.mangafreak.me uses class="chapter-link" on all chapter <a> tags
-        const chapItems = doc.querySelectorAll(".chapter-link");
+        const chapItems = doc.querySelectorAll(".chapter-link, a[href*='/Read1_'], .manga_series_list td a");
         for (const c of chapItems) {
             const link = c.attr("href");
             const name = c.text;

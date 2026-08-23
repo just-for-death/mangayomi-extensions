@@ -188,13 +188,17 @@ class DefaultExtension extends MProvider {
     const doc = new Document(res.body);
 
     const pages = [];
-    const imgs = doc.querySelectorAll("img[src*='uploads/manga'], img[data-src*='uploads/manga'], div#all img, .img-responsive, img.mx-auto");
+    const seen = new Set();
+    const imgs = doc.querySelectorAll("img[src*='uploads/manga'], img[data-src*='uploads/manga'], img[src*='cdn.readcomicsonline.ru'], img.mx-auto, .img-responsive");
 
     for (const img of imgs) {
-      const src = img.attr("data-src") || img.attr("src");
+      const src = img.attr("src") || img.attr("data-src");
       if (src && !src.includes("banner") && !src.includes("no-image") && !src.includes("logo") && !src.includes("cover_")) {
-        const cleanSrc = src.trim();
-        pages.push(cleanSrc.startsWith("http") ? cleanSrc : `https:${cleanSrc}`);
+        const cleanSrc = src.trim().startsWith("http") ? src.trim() : `https:${src.trim()}`;
+        if (!seen.has(cleanSrc)) {
+          seen.add(cleanSrc);
+          pages.push(cleanSrc);
+        }
       }
     }
 

@@ -125,7 +125,7 @@ class DefaultExtension extends MProvider {
         const author = doc.querySelector(".detail-info-right-say a")?.text || "";
 
         const chapters = [];
-        const chapItems = doc.querySelectorAll(".detail-main-list li a");
+        const chapItems = doc.querySelectorAll(".detail-main-list li a, ul.detail-main-list li a, .detail-main-list a, .detail-list a, a[href*='/manga/']");
         for (const c of chapItems) {
             const link = c.attr("href");
             const name = c.querySelector(".detail-main-list-main")?.text || c.text;
@@ -169,9 +169,13 @@ class DefaultExtension extends MProvider {
                         "X-Requested-With": "XMLHttpRequest"
                     });
                     var rawBody = funRes.body || "";
-                    if (rawBody.indexOf("<pre") !== -1) {
-                        const preMatch = rawBody.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
-                        if (preMatch) rawBody = preMatch[1];
+                    if (rawBody.includes("eval(")) {
+                        rawBody = "eval(" + rawBody.split("eval(")[1];
+                        if (rawBody.includes("</pre>")) {
+                            rawBody = rawBody.split("</pre>")[0];
+                        } else if (rawBody.includes("</body>")) {
+                            rawBody = rawBody.split("</body>")[0];
+                        }
                     }
                     rawBody = rawBody
                         .replace(/&lt;/g, "<")

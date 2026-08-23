@@ -88,20 +88,22 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
-        const items = doc.querySelectorAll(".pic_list .flex1.listitem, #information li, .uk-grid li, .pic_list li");
+        const seen = new Set();
+        const items = doc.querySelectorAll("ul#search_list li, .pic_list .flex1.listitem, #information li, .uk-grid li, .pic_list li, li.listitem");
 
         for (const item of items) {
-            const a = item.querySelector("a.thm-effect, a");
+            const a = item.querySelector("h2 a, h3 a, a.thm-effect, a[href*='/read-manga/']");
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
                 const link = a.attr("href");
                 const imageUrl = img ? (img.attr("data-src") || img.attr("src")) : "";
-                if (title && link) {
+                if (title && link && !seen.has(link)) {
+                    seen.add(link);
                     list.push({
                         name: title.trim(),
                         imageUrl: imageUrl,
-                        link: link
+                        link: link.startsWith('http') ? link : `https://www.mangago.me${link.startsWith('/') ? link : '/' + link}`
                     });
                 }
             }
@@ -109,7 +111,7 @@ class DefaultExtension extends MProvider {
 
         return {
             list: list,
-            hasNextPage: list.length >= 20
+            hasNextPage: list.length >= 10
         };
     }
 
@@ -159,35 +161,16 @@ class DefaultExtension extends MProvider {
         const seen = new Set();
 
         // 1. Check img tags with specific selectors
-        const imgs = doc.querySelectorAll("#pic_container img, img#comic_page, .page-image img, #page_list img, .manga_pic, img[src*='mangapicgallery'], img[data-src*='mangapicgallery']");
+        const imgs = doc.querySelectorAll("img[id^='page'], img[src*='mangapicgallery.com/r/'], #pic_container img, img#comic_page, .page-image img, #page_list img, .manga_pic");
         for (const img of imgs) {
             const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
-            if (src && src.startsWith("http") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !seen.has(src)) {
+            if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !seen.has(src)) {
                 seen.add(src);
                 pages.push({
                     url: src,
                     headers: { "Referer": "https://www.mangago.me/" }
                 });
             }
-        }
-
-        // 2. Check if imgsrcs string is in the HTML
-        const html = res.body || "";
-        const match = html.match(/var\s+imgsrcs\s*=\s*['"]([^'"]+)['"]/);
-        if (match && match[1] && pages.length === 0) {
-            try {
-                const raw = atob(match[1]);
-                const urls = raw.split(",").filter(u => u.startsWith("http"));
-                for (const u of urls) {
-                    if (!seen.has(u)) {
-                        seen.add(u);
-                        pages.push({
-                            url: u,
-                            headers: { "Referer": "https://www.mangago.me/" }
-                        });
-                    }
-                }
-            } catch (_) {}
         }
 
         return pages;
