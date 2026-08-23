@@ -179,19 +179,17 @@ class DefaultExtension extends MProvider {
 
         extractImgs(doc);
 
-        // Check if single-page mode with total_pages
-        const tpMatch = html.match(/total_pages\s*=\s*(\d+)/);
-        if (tpMatch && pages.length < 5) {
-            const total = parseInt(tpMatch[1]);
-            const baseUrlClean = fullUrl.replace(/\/pg-\d+\/?$/, "");
-            for (let p = 2; p <= Math.min(total, 60); p++) {
-                try {
-                    const pUrl = `${baseUrlClean}/pg-${p}/`;
-                    const pRes = await this.client.get(pUrl, this.getHeaders());
-                    const pDoc = new Document(pRes.body || "");
-                    extractImgs(pDoc);
-                } catch (_) {
-                    break;
+        // Fallback for any image containers on Mangago
+        if (pages.length === 0) {
+            const imgs = doc.querySelectorAll("#pic_container img, #page_list img, .page-image img, img[id^='page'], img#comic_page");
+            for (const img of imgs) {
+                const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
+                if (src && src.startsWith("http") && !seen.has(src)) {
+                    seen.add(src);
+                    pages.push({
+                        url: src,
+                        headers: { "Referer": "https://www.mangago.me/" }
+                    });
                 }
             }
         }
