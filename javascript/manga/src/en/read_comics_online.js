@@ -197,7 +197,10 @@ class DefaultExtension extends MProvider {
         const cleanSrc = src.trim().startsWith("http") ? src.trim() : `https:${src.trim()}`;
         if (!seen.has(cleanSrc)) {
           seen.add(cleanSrc);
-          pages.push(cleanSrc);
+          pages.push({
+            url: cleanSrc,
+            headers: { "Referer": "" }
+          });
         }
       }
     }
