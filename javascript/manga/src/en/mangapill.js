@@ -165,18 +165,20 @@ class DefaultExtension extends MProvider {
     var res = await new Client().get(link, this.getHeaders());
     var doc = new Document(res.body);
 
-    var urls = [];
-
-    var pages = doc.select("chapter-page");
-    for (var page of pages) {
-      var img = page.selectFirst("img") ? page.selectFirst("img").getSrc : null;
-      if (img != null) urls.push(img);
+    var imgElements = doc.select("chapter-page img, picture img, img[data-src]");
+    for (var img of imgElements) {
+      var src = img.attr("data-src") || img.attr("src") || img.getSrc || "";
+      if (src && !urls.includes(src) && !src.includes("logo") && !src.includes("banner")) {
+        urls.push(src);
+      }
     }
     if (urls.length === 0) {
-      var fallbackImgs = doc.select("picture img, div.flex.flex-col img, img");
-      for (var fImg of fallbackImgs) {
-        var src = fImg.getSrc || fImg.attr("data-src") || fImg.attr("src");
-        if (src && !urls.includes(src) && !src.includes("logo") && !src.includes("banner")) urls.push(src);
+      var allImgs = doc.select("img");
+      for (var fImg of allImgs) {
+        var src = fImg.attr("data-src") || fImg.attr("src") || fImg.getSrc || "";
+        if (src && !urls.includes(src) && !src.includes("logo") && !src.includes("banner") && src.startsWith("http")) {
+          urls.push(src);
+        }
       }
     }
 
