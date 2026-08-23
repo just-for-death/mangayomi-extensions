@@ -114,7 +114,9 @@ class DefaultExtension extends MProvider {
     }
 
     async getDetail(url) {
-        const fullUrl = url.startsWith('http') ? url : `https://fanfox.net${url}`;
+        const fullUrl = url.startsWith('http') 
+            ? url.replace(/https?:\/\/(?:www\.)?mangahere\.cc/, 'https://fanfox.net') 
+            : `https://fanfox.net${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
         const doc = new Document(res.body);
 
@@ -139,16 +141,23 @@ class DefaultExtension extends MProvider {
         }
 
         const chapters = [];
-        const rows = doc.querySelectorAll(".detail-main-list li a, .detail-main-list a");
+        const rows = doc.querySelectorAll(".detail-main-list li a, .detail-main-list a, a[href*='/c']");
+        const seenLinks = new Set();
 
         for (const a of rows) {
             const name = a.attr("title") || a.text;
             const link = a.attr("href");
-            if (name && link && link.indexOf('/manga/') !== -1) {
-                chapters.push({
-                    name: name.trim(),
-                    url: link.startsWith('http') ? link : `https://fanfox.net${link}`
-                });
+            if (name && link && (link.includes('/c') || link.includes('/manga/')) && !link.includes('/directory/') && !link.includes('/comichistory/') && !link.includes('/author/')) {
+                const fullLink = link.startsWith('http') 
+                    ? link.replace(/https?:\/\/(?:www\.)?mangahere\.cc/, 'https://fanfox.net') 
+                    : `https://fanfox.net${link}`;
+                if (!seenLinks.has(fullLink) && fullLink.match(/\/c[0-9]/)) {
+                    seenLinks.add(fullLink);
+                    chapters.push({
+                        name: name.trim(),
+                        url: fullLink
+                    });
+                }
             }
         }
 
