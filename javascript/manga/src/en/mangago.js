@@ -132,11 +132,11 @@ class DefaultExtension extends MProvider {
         const rows = doc.querySelectorAll("table#chapter_table tbody tr, #chapter_table tr, .chapter_list tr");
 
         for (const row of rows) {
-            const a = row.querySelector("a.chpt, a[href*='/read-manga/'], a");
+            const a = row.querySelector("a.chico, a.chpt, a[href*='/chapter/'], a[href*='/read-manga/'], td:first-child a");
             if (a) {
                 const name = a.text.trim();
                 const link = a.attr("href");
-                if (name && link && !link.includes("/home/people/")) {
+                if (name && link && !link.includes("/home/people/") && !link.includes("/upload/")) {
                     chapters.push({
                         name: name,
                         url: link
