@@ -125,7 +125,7 @@ class DefaultExtension extends MProvider {
             }
         }
 
-        var chapSlug = `${slug}/full-chapter-list`;
+        var chapSlug = `/series/${link}/full-chapter-list`;
         var chapDoc = await this.request(chapSlug);
         var chapList = chapDoc.select("div.flex.items-center");
         for (var chap of chapList) {
@@ -134,8 +134,9 @@ class DefaultExtension extends MProvider {
             var name = innerSpan ? innerSpan.text.trim() : "Chapter";
             var timeEl = chap.selectFirst("time.text-datetime");
             var dateUpload = timeEl ? new Date(timeEl.text).valueOf().toString() : "";
+            var aEl = chap.selectFirst("a");
             var inputEl = chap.selectFirst("input");
-            var chapUrl = inputEl ? inputEl.attr("value") : "";
+            var chapUrl = aEl ? aEl.getHref : (inputEl ? inputEl.attr("value") : "");
             if (chapUrl) {
                 chapters.push({ name, url: chapUrl, dateUpload });
             }
@@ -151,10 +152,11 @@ class DefaultExtension extends MProvider {
         var doc = await this.request(slug);
 
         var urls = [];
-        doc.select("section > img").forEach(page => {
-            var src = page.attr("src");
-            if (src) urls.push(src);
-        });
+        var images = doc.select("#chapter-images img, section img, article img");
+        for (var page of images) {
+            var src = page.getSrc || page.attr("src");
+            if (src && !urls.includes(src)) urls.push(src);
+        }
 
         return urls.map(x => ({ url: x, headers: { Referer: `${this.source.baseUrl}/` } }));
     }
