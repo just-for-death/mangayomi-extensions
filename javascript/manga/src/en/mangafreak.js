@@ -28,7 +28,7 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
-        const items = doc.querySelectorAll(".ranking_item") || doc.querySelectorAll(".genre_main .manga_series_item");
+        const items = doc.querySelectorAll(".ranking_item, .genre_main .manga_series_item, .manga_series_item");
 
         for (const item of items) {
             const a = item.querySelector(".ranking_item_info a") || item.querySelector("a");

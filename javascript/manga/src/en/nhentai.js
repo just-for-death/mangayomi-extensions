@@ -147,7 +147,7 @@ class DefaultExtension extends MProvider {
     // Extract thumbs and convert to full image URLs
     // Thumb: https://t2.nhentai.net/galleries/4130667/thumb.webp or /1t.webp
     // Image: https://i2.nhentai.net/galleries/4130667/1.webp
-    const thumbImgs = doc.querySelectorAll(".thumb-container img") || doc.querySelectorAll("#thumbnail-container img");
+    const thumbImgs = doc.querySelectorAll(".thumb-container img, #thumbnail-container img, .thumbs img");
 
     for (let i = 0; i < thumbImgs.length; i++) {
       const img = thumbImgs[i];

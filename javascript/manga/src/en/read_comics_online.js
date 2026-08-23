@@ -153,7 +153,7 @@ class DefaultExtension extends MProvider {
     const description = descEl ? descEl.text.trim() : "";
 
     const chapters = [];
-    const chapterLinks = doc.querySelectorAll("ul.chapters li a") || doc.querySelectorAll("a[href*='/comic/']");
+    const chapterLinks = doc.querySelectorAll("ul.chapters li a, a[href*='/comic/']");
     const seen = new Set();
 
     for (const a of chapterLinks) {
@@ -188,11 +188,11 @@ class DefaultExtension extends MProvider {
     const doc = new Document(res.body);
 
     const pages = [];
-    const imgs = doc.querySelectorAll("div#all img") || doc.querySelectorAll(".img-responsive") || doc.querySelectorAll("img[src*='uploads/manga']");
+    const imgs = doc.querySelectorAll("img[src*='uploads/manga'], img[data-src*='uploads/manga'], div#all img, .img-responsive, img.mx-auto");
 
     for (const img of imgs) {
       const src = img.attr("data-src") || img.attr("src");
-      if (src && !src.includes("banner") && !src.includes("no-image") && !src.includes("logo")) {
+      if (src && !src.includes("banner") && !src.includes("no-image") && !src.includes("logo") && !src.includes("cover_")) {
         const cleanSrc = src.trim();
         pages.push(cleanSrc.startsWith("http") ? cleanSrc : `https:${cleanSrc}`);
       }
