@@ -15,8 +15,14 @@ const mangayomiSources = [{
 }];
 
 class DefaultExtension extends MProvider {
+  getHeaders(url) {
+    return {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "Referer": "https://www.webtoons.com/"
+    };
+  }
   get headers() {
-    return { "User-Agent": "Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Mobile Safari/537.36" };
+    return this.getHeaders();
   }
   get mobileUrl() {
     return "https://m.webtoons.com";
@@ -359,15 +365,15 @@ class DefaultExtension extends MProvider {
     const res = await new Client().get(cleanUrl, this.getHeaders(cleanUrl));
     const doc = new Document(res.body);
     const urls = [];
-    const images = doc.querySelectorAll("div#_imageList img, .viewer_lst img, .viewer_img img, img[data-url]");
+    const seen = new Set();
+    const images = (typeof doc.select === "function" ? doc.select("div#_imageList img, div.viewer_img img, .viewer_lst img") : null) ||
+                   (typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("div#_imageList img, div.viewer_img img, .viewer_lst img") : []);
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
-      const src = img.attr("data-url") || img.attr("src") || "";
-      if (src && !src.includes("sp_error") && !src.includes("banner") && !src.includes("logo")) {
-        urls.push({
-          url: src.trim(),
-          headers: { "Referer": "https://www.webtoons.com/" }
-        });
+      const src = (typeof img.attr === "function" ? (img.attr("data-url") || img.attr("src")) : (img.getSrc || img.getAttribute?.("data-url") || img.getAttribute?.("src"))) || "";
+      if (src && !src.includes("sp_error") && !src.includes("banner") && !src.includes("logo") && !seen.has(src)) {
+        seen.add(src);
+        urls.push(src.trim());
       }
     }
     return urls;
