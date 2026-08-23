@@ -6,7 +6,7 @@ const mangayomiSources = [{
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.0.0",
+    "version": "1.1.0",
     "pkgPath": "manga/src/en/mangago.js"
 }];
 
