@@ -156,20 +156,43 @@ class DefaultExtension extends MProvider {
     async getPageList(url) {
         const fullUrl = url.startsWith('http') ? url : `https://www.mangago.me${url.startsWith('/') ? '' : '/'}${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
-        const doc = new Document(res.body);
+        const html = res.body || "";
+        const doc = new Document(html);
         const pages = [];
         const seen = new Set();
 
-        // 1. Check img tags with specific selectors
-        const imgs = doc.querySelectorAll("img[id^='page'], img[src*='mangapicgallery.com/r/'], #pic_container img, img#comic_page, .page-image img, #page_list img, .manga_pic");
-        for (const img of imgs) {
-            const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
-            if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !seen.has(src)) {
-                seen.add(src);
-                pages.push({
-                    url: src,
-                    headers: { "Referer": "https://www.mangago.me/" }
-                });
+        const extractImgs = (d) => {
+            const allImgs = d.querySelectorAll("img");
+            for (const img of allImgs) {
+                const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
+                if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !src.includes("loader") && !seen.has(src)) {
+                    if (src.includes("mangapicgallery.com") || src.includes("/r/newpiclink/") || src.includes("/r/piclink/")) {
+                        seen.add(src);
+                        pages.push({
+                            url: src,
+                            headers: { "Referer": "https://www.mangago.me/" }
+                        });
+                    }
+                }
+            }
+        };
+
+        extractImgs(doc);
+
+        // Check if single-page mode with total_pages
+        const tpMatch = html.match(/total_pages\s*=\s*(\d+)/);
+        if (tpMatch && pages.length < 5) {
+            const total = parseInt(tpMatch[1]);
+            const baseUrlClean = fullUrl.replace(/\/pg-\d+\/?$/, "");
+            for (let p = 2; p <= Math.min(total, 60); p++) {
+                try {
+                    const pUrl = `${baseUrlClean}/pg-${p}/`;
+                    const pRes = await this.client.get(pUrl, this.getHeaders());
+                    const pDoc = new Document(pRes.body || "");
+                    extractImgs(pDoc);
+                } catch (_) {
+                    break;
+                }
             }
         }
 
