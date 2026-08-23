@@ -55,7 +55,7 @@ class DefaultExtension extends MProvider {
       const titleEl = el.selectFirst("strong.title, p.subj, .subj, strong, p.title");
       const name = titleEl ? titleEl.text.trim() : "";
       const link = el.getHref || el.attr("href") || "";
-      if (name && link && !seen.has(link)) {
+      if (name && link && !link.includes('/viewer?') && !seen.has(link)) {
         seen.add(link);
         list.push({ name, imageUrl, link });
       }
@@ -190,35 +190,33 @@ class DefaultExtension extends MProvider {
 
     if (chapters.length === 0) {
       try {
-        res = await new Client().get(
-          url.replace(this.getBaseUrl(), this.getMobileUrl()),
-          this.headers,
-        );
+        const mobUrl = url.replace(this.getBaseUrl(), this.getMobileUrl());
+        res = await new Client().get(mobUrl, this.getHeaders(mobUrl));
         doc = new Document(res.body);
-        for (const el of doc.select("ul#_episodeList li[id*=episode] a, ul._episodeList li a, li[id*=episode] a")) {
-          const mUrl = el.getHref.replace(this.getMobileUrl(), this.getBaseUrl());
-          let name = el.selectFirst(".sub_title > span.ellipsis, .sub_title")?.text || "Episode";
-        const linkEl = el.selectFirst("a");
-        if (!linkEl) continue;
-        var mUrl = linkEl.getHref || linkEl.attr("href") || "";
-        if (mUrl) {
-          mUrl = mUrl.replace(/&amp;/g, "&");
-          if (!mUrl.startsWith("http")) {
-            mUrl = `https://www.webtoons.com${mUrl.startsWith("/") ? "" : "/"}${mUrl}`;
-          }
-          const numEl = el.selectFirst(".tx");
-          var name = linkEl.selectFirst(".subj span")?.text || linkEl.selectFirst(".subj")?.text || "";
-          if (numEl) {
-            name = `#${numEl.text.trim()} ${name.trim()}`;
-          }
-          const dateUpload = el.selectFirst(".sub_info .date")?.text || "";
+        for (const el of doc.select("ul#_episodeList li, ul._episodeList li, li[id*=episode]")) {
+          const linkEl = el.selectFirst("a");
+          if (!linkEl) continue;
+          let mUrl = linkEl.getHref || linkEl.attr("href") || "";
+          if (mUrl) {
+            mUrl = mUrl.replace(/&amp;/g, "&");
+            mUrl = mUrl.replace(this.getMobileUrl(), this.getBaseUrl());
+            if (!mUrl.startsWith("http")) {
+              mUrl = `https://www.webtoons.com${mUrl.startsWith("/") ? "" : "/"}${mUrl}`;
+            }
+            const numEl = el.selectFirst(".tx");
+            let epName = linkEl.selectFirst(".subj span")?.text || linkEl.selectFirst(".subj")?.text || linkEl.selectFirst(".sub_title")?.text || "Episode";
+            if (numEl) {
+              epName = `#${numEl.text.trim()} ${epName.trim()}`;
+            }
+            const dateUpload = el.selectFirst(".sub_info .date, .date")?.text || "";
 
-          if (!chapters.some(c => c.url === mUrl)) {
-            chapters.push({
-              name: name.trim() || "Episode",
-              url: mUrl,
-              dateUpload: dateUpload
-            });
+            if (!chapters.some(c => c.url === mUrl)) {
+              chapters.push({
+                name: epName.trim() || "Episode",
+                url: mUrl,
+                dateUpload: dateUpload
+              });
+            }
           }
         }
       } catch (_) {}
