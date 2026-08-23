@@ -149,13 +149,57 @@ class DefaultExtension extends MProvider {
     async getPageList(url) {
         const fullUrl = url.startsWith('http') ? url : `${this.source.baseUrl}${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
-        const match = res.body.match(/var\s+imagebrowse\s*=\s*(\[[^\]]+\])/);
-        if (match) {
-            try {
-                const urls = JSON.parse(match[1]);
-                return urls.map(u => ({ url: u.startsWith('//') ? `https:${u}` : u, headers: this.getHeaders() }));
-            } catch (_) {}
+        const html = res.body || "";
+
+        const cidMatch = html.match(/var\s+chapterid\s*=\s*(\d+)/);
+        const countMatch = html.match(/var\s+imagecount\s*=\s*(\d+)/);
+
+        if (cidMatch) {
+            const cid = cidMatch[1];
+            const count = countMatch ? parseInt(countMatch[1]) : 1;
+            const pages = [];
+            const seen = new Set();
+
+            for (let page = 1; page <= count; page += 2) {
+                try {
+                    const funUrl = `${this.source.baseUrl}/chapterfun.ashx?cid=${cid}&page=${page}`;
+                    const funRes = await this.client.get(funUrl, {
+                        ...this.getHeaders(),
+                        "Referer": fullUrl
+                    });
+                    if (funRes.body && funRes.body.includes("eval(")) {
+                        var d = undefined;
+                        const script = eval(funRes.body);
+                        if (typeof script === "string") {
+                            eval(script);
+                        }
+                        if (typeof d !== "undefined" && Array.isArray(d)) {
+                            for (let img of d) {
+                                if (img && !seen.has(img)) {
+                                    seen.add(img);
+                                    pages.push(img.startsWith("//") ? `https:${img}` : (img.startsWith("http") ? img : `https:${img}`));
+                                }
+                            }
+                        }
+                    }
+                } catch (_) {}
+            }
+
+            if (pages.length > 0) {
+                return pages;
+            }
         }
-        return [];
+
+        // Fallback: static images in DOM
+        const doc = new Document(html);
+        const imgs = doc.querySelectorAll(".reader-main img, #viewer img, .read-container img, img#image");
+        const fallback = [];
+        for (const img of imgs) {
+            const src = img.attr("data-src") || img.attr("src") || img.attr("data-original");
+            if (src && !src.includes("logo") && !src.includes("banner")) {
+                fallback.push(src.startsWith("//") ? `https:${src}` : src);
+            }
+        }
+        return fallback;
     }
 }
