@@ -3,14 +3,14 @@ const mangayomiSources = [
     "name": "NineHentai",
     "lang": "en",
     "id": 768949056,
-    "baseUrl": "https://ninehentai.to",
-    "apiUrl": "https://api.ninehentai.to",
+    "baseUrl": "https://9hentai.so",
+    "apiUrl": "https://9hentai.so/api",
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.ninehentai.png",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.0.0",
+    "version": "1.1.0",
     "pkgPath": "javascript/manga/src/en/ninehentai.js"
   }
 ];
@@ -25,18 +25,21 @@ class DefaultExtension extends MProvider {
     return {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6832.64 Safari/537.36",
-      "Referer": "https://ninehentai.to/",
+      "Referer": "https://9hentai.so/",
       "Content-Type": "application/json"
     };
   }
 
   async getPopular(page) {
-    const url = "https://api.ninehentai.to/api/books";
+    const url = "https://9hentai.so/api/getBook";
     const body = {
-      total: 20,
-      page: page - 1,
-      sort: 1, // Popular / Top views
-      search: { text: "", params: {} }
+      search: {
+        text: "",
+        page: page - 1,
+        sort: 1, // Popular
+        pages: { range: [0, 2000] },
+        tag: { text: "", type: 1, tags: [], items: { included: [], excluded: [] } }
+      }
     };
     try {
       const res = await this.client.post(url, this.getHeaders(), body);
@@ -45,12 +48,12 @@ class DefaultExtension extends MProvider {
       const list = results.map((b) => ({
         name: b.title || "Untitled",
         imageUrl: b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "",
-        link: `https://ninehentai.to/g/${b.id}/`
+        link: `https://9hentai.so/g/${b.id}/`
       }));
 
       return {
         list: list,
-        hasNextPage: results.length >= 20
+        hasNextPage: results.length >= 18
       };
     } catch (_) {
       return { list: [], hasNextPage: false };
@@ -58,12 +61,15 @@ class DefaultExtension extends MProvider {
   }
 
   async getLatestUpdates(page) {
-    const url = "https://api.ninehentai.to/api/books";
+    const url = "https://9hentai.so/api/getBook";
     const body = {
-      total: 20,
-      page: page - 1,
-      sort: 0, // Latest
-      search: { text: "", params: {} }
+      search: {
+        text: "",
+        page: page - 1,
+        sort: 0, // Latest
+        pages: { range: [0, 2000] },
+        tag: { text: "", type: 1, tags: [], items: { included: [], excluded: [] } }
+      }
     };
     try {
       const res = await this.client.post(url, this.getHeaders(), body);
@@ -72,12 +78,12 @@ class DefaultExtension extends MProvider {
       const list = results.map((b) => ({
         name: b.title || "Untitled",
         imageUrl: b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "",
-        link: `https://ninehentai.to/g/${b.id}/`
+        link: `https://9hentai.so/g/${b.id}/`
       }));
 
       return {
         list: list,
-        hasNextPage: results.length >= 20
+        hasNextPage: results.length >= 18
       };
     } catch (_) {
       return { list: [], hasNextPage: false };
@@ -85,12 +91,15 @@ class DefaultExtension extends MProvider {
   }
 
   async search(query, page, filters) {
-    const url = "https://api.ninehentai.to/api/books";
+    const url = "https://9hentai.so/api/getBook";
     const body = {
-      total: 20,
-      page: page - 1,
-      sort: 1,
-      search: { text: query || "", params: {} }
+      search: {
+        text: query || "",
+        page: page - 1,
+        sort: 1,
+        pages: { range: [0, 2000] },
+        tag: { text: "", type: 1, tags: [], items: { included: [], excluded: [] } }
+      }
     };
     try {
       const res = await this.client.post(url, this.getHeaders(), body);
@@ -99,12 +108,12 @@ class DefaultExtension extends MProvider {
       const list = results.map((b) => ({
         name: b.title || "Untitled",
         imageUrl: b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "",
-        link: `https://ninehentai.to/g/${b.id}/`
+        link: `https://9hentai.so/g/${b.id}/`
       }));
 
       return {
         list: list,
-        hasNextPage: results.length >= 20
+        hasNextPage: results.length >= 18
       };
     } catch (_) {
       return { list: [], hasNextPage: false };
@@ -112,12 +121,12 @@ class DefaultExtension extends MProvider {
   }
 
   async getDetail(url) {
-    const id = url.replace("https://ninehentai.to", "").replace(/[^0-9]/g, "");
-    const apiUrl = "https://api.ninehentai.to/api/bookById";
+    const id = url.replace(/[^0-9]/g, "");
+    const apiUrl = "https://9hentai.so/api/getBookByID";
     try {
       const res = await this.client.post(apiUrl, this.getHeaders(), { id: parseInt(id) });
       const data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
-      const b = data.result || data;
+      const b = data.results || data;
 
       const tags = (b.tags || []).map((t) => t.name || t);
       const imageUrl = b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "";
@@ -132,7 +141,7 @@ class DefaultExtension extends MProvider {
         chapters: [
           {
             name: "Read Online",
-            url: `https://ninehentai.to/g/${b.id}/`
+            url: `https://9hentai.so/g/${b.id}/`
           }
         ]
       };
@@ -150,18 +159,21 @@ class DefaultExtension extends MProvider {
   }
 
   async getPageList(url) {
-    const id = url.replace("https://ninehentai.to", "").replace(/[^0-9]/g, "");
-    const apiUrl = "https://api.ninehentai.to/api/bookById";
+    const id = url.replace(/[^0-9]/g, "");
+    const apiUrl = "https://9hentai.so/api/getBookByID";
     try {
       const res = await this.client.post(apiUrl, this.getHeaders(), { id: parseInt(id) });
       const data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
-      const b = data.result || data;
-      const server = b.image_server || "https://f01.ninehentai.to/images/";
+      const b = data.results || data;
+      const server = b.image_server || "https://i.9hentai.so/images/";
       const total = b.total_page || 1;
       const pages = [];
 
       for (let i = 1; i <= total; i++) {
-        pages.push(`${server}${b.id}/${i}.jpg`);
+        pages.push({
+          url: `${server}${b.id}/${i}.jpg`,
+          headers: { "Referer": "https://9hentai.so/" }
+        });
       }
 
       return pages;

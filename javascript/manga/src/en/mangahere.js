@@ -1,13 +1,13 @@
 const mangayomiSources = [{
     "name": "MangaHere",
     "lang": "en",
-    "baseUrl": "https://www.mangahere.cc",
+    "baseUrl": "https://fanfox.net",
     "apiUrl": "",
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangahere.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.0.0",
-    "pkgPath": "manga/src/en/mangahere.js"
+    "version": "1.1.0",
+    "pkgPath": "javascript/manga/src/en/mangahere.js"
 }];
 
 class DefaultExtension extends MProvider {
@@ -18,13 +18,13 @@ class DefaultExtension extends MProvider {
 
     getHeaders() {
         return {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://www.mangahere.cc/"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Referer": "https://fanfox.net/"
         };
     }
 
     async getPopular(page) {
-        const url = `${this.source.baseUrl}/directory/${page}.htm`;
+        const url = `https://fanfox.net/directory/${page}.htm`;
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
@@ -40,8 +40,8 @@ class DefaultExtension extends MProvider {
                 if (title && link && link.indexOf('/manga/') !== -1) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl,
-                        link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
+                        imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+                        link: link.startsWith('http') ? link : `https://fanfox.net${link}`
                     });
                 }
             }
@@ -54,7 +54,7 @@ class DefaultExtension extends MProvider {
     }
 
     async getLatestUpdates(page) {
-        const url = `${this.source.baseUrl}/directory/${page}.htm?latest`;
+        const url = `https://fanfox.net/directory/${page}.htm?latest`;
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
@@ -70,8 +70,8 @@ class DefaultExtension extends MProvider {
                 if (title && link && link.indexOf('/manga/') !== -1) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl,
-                        link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
+                        imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+                        link: link.startsWith('http') ? link : `https://fanfox.net${link}`
                     });
                 }
             }
@@ -84,7 +84,7 @@ class DefaultExtension extends MProvider {
     }
 
     async search(query, page, filters) {
-        const url = `${this.source.baseUrl}/search?title=${encodeURIComponent(query)}&page=${page}`;
+        const url = `https://fanfox.net/search?title=${encodeURIComponent(query)}&page=${page}`;
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
@@ -100,8 +100,8 @@ class DefaultExtension extends MProvider {
                 if (title && link) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl,
-                        link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
+                        imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+                        link: link.startsWith('http') ? link : `https://fanfox.net${link}`
                     });
                 }
             }
@@ -114,40 +114,57 @@ class DefaultExtension extends MProvider {
     }
 
     async getDetail(url) {
-        const fullUrl = url.startsWith('http') ? url : `${this.source.baseUrl}${url}`;
+        const fullUrl = url.startsWith('http') ? url : `https://fanfox.net${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
         const doc = new Document(res.body);
 
-        const title = doc.querySelector(".detail-info-right-title-font")?.text || "";
-        const description = doc.querySelector(".fullcontent")?.text || "";
-        const img = doc.querySelector(".detail-info-cover-img");
-        const imageUrl = img ? (img.attr("src") || img.attr("data-src")) : "";
-        const author = doc.querySelector(".detail-info-right-say a")?.text || "";
+        const titleElem = doc.querySelector(".detail-info-right-title-font, .detail-info-cover-img");
+        const title = titleElem ? (titleElem.text || titleElem.attr("alt") || "") : "";
+
+        const descElem = doc.querySelector(".detail-info-right-content, .fullcontent");
+        const description = descElem ? descElem.text : "";
+
+        const imgElem = doc.querySelector(".detail-info-cover-img");
+        var imageUrl = imgElem ? (imgElem.attr("src") || imgElem.attr("data-src") || "") : "";
+        if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
+
+        const authorElem = doc.querySelector(".detail-info-right-say a, a[href*='/author/']");
+        const author = authorElem ? authorElem.text : "";
+
+        const genreElems = doc.querySelectorAll(".detail-info-right-tag-list a, a[href*='/genre/']");
+        const genres = [];
+        for (const g of genreElems) {
+            const t = g.text.trim();
+            if (t && !genres.includes(t)) genres.push(t);
+        }
 
         const chapters = [];
-        const chapItems = doc.querySelectorAll(".detail-main-list li a, ul.detail-main-list li a, .detail-main-list a, .detail-list a, a[href*='/manga/']");
-        for (const c of chapItems) {
-            const link = c.attr("href");
-            const name = c.querySelector(".detail-main-list-main")?.text || c.text;
-            if (link && name) {
+        const rows = doc.querySelectorAll(".detail-main-list li a, .detail-main-list a");
+
+        for (const a of rows) {
+            const name = a.attr("title") || a.text;
+            const link = a.attr("href");
+            if (name && link && link.indexOf('/manga/') !== -1) {
                 chapters.push({
                     name: name.trim(),
-                    url: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
+                    url: link.startsWith('http') ? link : `https://fanfox.net${link}`
                 });
             }
         }
 
         return {
-            title: title.trim(),
+            name: title.trim(),
             description: description.trim(),
             imageUrl: imageUrl,
             author: author.trim(),
+            genre: genres,
+            status: 0,
             chapters: chapters
         };
     }
 
     async getPageList(url) {
-        const fullUrl = url.startsWith('http') ? url : `${this.source.baseUrl}${url}`;
+        const fullUrl = url.startsWith('http') ? url : `https://fanfox.net${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
         const html = res.body || "";
 
@@ -160,9 +177,26 @@ class DefaultExtension extends MProvider {
             const pages = [];
             const seen = new Set();
 
+            // Extract key from packed script in chapter html
+            var guidkey = "";
+            try {
+                const sIdx = html.indexOf("eval(function(p,a,c,k,e,d)");
+                if (sIdx !== -1) {
+                    const sEnd = html.indexOf("</script>", sIdx);
+                    const packedScript = html.substring(sIdx, sEnd !== -1 ? sEnd : undefined);
+                    const unpacked = eval(packedScript.replace(/^eval\(/, "("));
+                    const kMatch = unpacked.match(/guidkey\s*=\s*['"]([^'"]+)['"]/);
+                    if (kMatch) {
+                        guidkey = kMatch[1];
+                    }
+                }
+            } catch (_) {}
+
+            const baseChapterUrl = fullUrl.substring(0, fullUrl.lastIndexOf('/') + 1);
+
             for (let page = 1; page <= count; page += 2) {
                 try {
-                    const funUrl = `${this.source.baseUrl}/chapterfun.ashx?cid=${cid}&page=${page}`;
+                    const funUrl = `${baseChapterUrl}chapterfun.ashx?cid=${cid}&page=${page}&key=${guidkey}`;
                     const funRes = await this.client.get(funUrl, {
                         ...this.getHeaders(),
                         "Referer": fullUrl,
@@ -195,7 +229,11 @@ class DefaultExtension extends MProvider {
                             for (let img of d) {
                                 if (img && !seen.has(img)) {
                                     seen.add(img);
-                                    pages.push(img.startsWith("//") ? `https:${img}` : (img.startsWith("http") ? img : `https:${img}`));
+                                    const fullImg = img.startsWith("//") ? `https:${img}` : img;
+                                    pages.push({
+                                        url: fullImg,
+                                        headers: { "Referer": "https://fanfox.net/" }
+                                    });
                                 }
                             }
                         }
@@ -215,7 +253,11 @@ class DefaultExtension extends MProvider {
         for (const img of imgs) {
             const src = img.attr("data-src") || img.attr("src") || img.attr("data-original");
             if (src && !src.includes("logo") && !src.includes("banner")) {
-                fallback.push(src.startsWith("//") ? `https:${src}` : src);
+                const fullSrc = src.startsWith("//") ? `https:${src}` : src;
+                fallback.push({
+                    url: fullSrc,
+                    headers: { "Referer": "https://fanfox.net/" }
+                });
             }
         }
         return fallback;
