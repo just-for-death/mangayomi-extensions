@@ -41,48 +41,37 @@ class DefaultExtension extends MProvider {
   }
 
   async getMangaList(slug) {
-    var lang = await this.getPreference("pref_title_lang");
-
-    var url = `${this.source.baseUrl}/${slug}`;
+    var cleanSlug = slug || "mangas";
+    var url = cleanSlug.startsWith('http') ? cleanSlug : `${this.source.baseUrl}/${cleanSlug.replace(/^\//, '')}`;
     var res = await new Client().get(url, this.getHeaders());
     var doc = new Document(res.body);
     var list = [];
-    var mangaElements = doc.select("div.grid.gap-3.lg > div");
+    var mangaElements = doc.select("div[class*='grid'] > div, div.grid > div");
     for (var manga of mangaElements) {
-      var details = manga.selectFirst("div").select("a");
-      var detLen = details.length;
-      details = details[detLen - 1];
-
-      var imageUrl = manga.selectFirst("img").getSrc;
-      var link = details.getHref;
-      var nameSection = details.select("div");
-
-      var name =
-        nameSection[1] && lang == 2 ? nameSection[1].text : nameSection[0].text;
-
-      list.push({ name, imageUrl, link });
+      var a = manga.selectFirst("a[href*='/manga/']");
+      var img = manga.selectFirst("img");
+      if (a && img) {
+        var link = a.getHref;
+        var imageUrl = img.getSrc || img.attr("data-src") || img.attr("src") || "";
+        var nameDiv = manga.selectFirst("div.font-black, div.font-bold, .line-clamp-2, a.mb-2");
+        var name = (nameDiv ? nameDiv.text : a.text).trim();
+        if (name && link && !list.some(x => x.link === link)) {
+          list.push({
+            name,
+            imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+            link: link.startsWith("http") ? link : `${this.source.baseUrl}${link.startsWith('/') ? link : '/' + link}`
+          });
+        }
+      }
     }
-    var hasNextPage = false;
-    if (slug.includes("search?q")) {
-      hasNextPage = doc.selectFirst(".container.py-3 a.btn.btn-sm").className
-        ? true
-        : false;
-    }
-    return { list, hasNextPage };
+    return { list, hasNextPage: list.length >= 10 };
   }
 
   async getNavPage(prefKey) {
     var val = await this.getPreference(prefKey);
-    var slug = "";
-    switch (val) {
-      case 1: {
-        slug = "mangas/new";
-        break;
-      }
-      case 2: {
-        slug = "chapters";
-        break;
-      }
+    var slug = "mangas/new";
+    if (val == 2) {
+      slug = "chapters";
     }
     return await this.getMangaList(slug);
   }
