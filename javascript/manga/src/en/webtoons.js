@@ -151,36 +151,54 @@ class DefaultExtension extends MProvider {
 
     // chapters
     const chapters = [];
-    res = await new Client().get(
-      url.replace(this.getBaseUrl(), this.getMobileUrl()),
-      this.headers,
-    );
-    doc = new Document(res.body);
-    for (const el of doc.select("ul#_episodeList li[id*=episode] a")) {
-      const url = el.getHref.replace(this.getMobileUrl(), this.getBaseUrl());
-      let name = el.selectFirst(".sub_title > span.ellipsis")?.text;
-      const chapterElement = el.selectFirst("div.row > div.num");
-      if (chapterElement) {
-        const chapterText = chapterElement.text;
-        const hashIndex = chapterText.indexOf("#");
-        if (hashIndex > -1) {
-          name += " Ch. " + chapterText.substring(hashIndex + 1);
+    const desktopLinks = doc.select("ul#_listUl li a, ul.detail_list li a, li._episodeItem a, a[href*='/viewer']");
+    if (desktopLinks.length > 0) {
+      for (const el of desktopLinks) {
+        const chUrl = el.getHref;
+        if (!chUrl || !chUrl.includes("/viewer")) continue;
+        const nameEl = el.selectFirst("span.subj, span.ellipsis, .tx") || el.selectFirst("img");
+        const name = (nameEl ? (nameEl.text || nameEl.attr("alt")) : "Episode").trim();
+        const dateEl = el.selectFirst("span.date");
+        const dateUpload = dateEl ? dateEl.text.trim() : "";
+        if (!chapters.some(c => c.url === chUrl)) {
+          chapters.push({
+            name: name || "Episode",
+            url: chUrl,
+            dateUpload: dateUpload
+          });
         }
       }
-      const dateUpload = new Date(
-        this.formatDateString(
-          el.selectFirst(".sub_info .date")?.text,
-          this.source.lang,
-        ),
-      )
-        .getTime()
-        .toString();
+    }
 
-      chapters.push({
-        name,
-        url,
-        dateUpload,
-      });
+    if (chapters.length === 0) {
+      try {
+        res = await new Client().get(
+          url.replace(this.getBaseUrl(), this.getMobileUrl()),
+          this.headers,
+        );
+        doc = new Document(res.body);
+        for (const el of doc.select("ul#_episodeList li[id*=episode] a, ul._episodeList li a, li[id*=episode] a")) {
+          const mUrl = el.getHref.replace(this.getMobileUrl(), this.getBaseUrl());
+          let name = el.selectFirst(".sub_title > span.ellipsis, .sub_title")?.text || "Episode";
+          const chapterElement = el.selectFirst("div.row > div.num");
+          if (chapterElement) {
+            const chapterText = chapterElement.text;
+            const hashIndex = chapterText.indexOf("#");
+            if (hashIndex > -1) {
+              name += " Ch. " + chapterText.substring(hashIndex + 1);
+            }
+          }
+          const dateUpload = el.selectFirst(".sub_info .date")?.text || "";
+
+          if (!chapters.some(c => c.url === mUrl)) {
+            chapters.push({
+              name: name.trim(),
+              url: mUrl,
+              dateUpload: dateUpload
+            });
+          }
+        }
+      } catch (_) {}
     }
 
     return {
