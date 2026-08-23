@@ -136,7 +136,23 @@ class DefaultExtension extends MProvider {
             var dateUpload = timeEl ? new Date(timeEl.text).valueOf().toString() : "";
             var aEl = chap.selectFirst("a");
             var inputEl = chap.selectFirst("input");
-            var chapUrl = aEl ? aEl.getHref : (inputEl ? inputEl.attr("value") : "");
+            // Use attr("href") — more reliable than .getHref in QuickJS DOM
+            var chapUrl = "";
+            if (aEl) {
+                chapUrl = aEl.attr("href") || aEl.getHref || "";
+            } else if (inputEl) {
+                chapUrl = inputEl.attr("value") || "";
+            }
+            // Fallback: extract ULID from any attribute containing /chapters/
+            if (!chapUrl) {
+                var raw = chap.attr("hx-get") || chap.attr("data-url") || "";
+                var m = raw.match(/\/chapters\/([A-Z0-9]{26})/);
+                if (m) chapUrl = m[0];
+            }
+            // Ensure absolute URL
+            if (chapUrl && !chapUrl.startsWith("http")) {
+                chapUrl = `${this.source.baseUrl}${chapUrl.startsWith("/") ? "" : "/"}${chapUrl}`;
+            }
             if (chapUrl) {
                 chapters.push({ name, url: chapUrl, dateUpload });
             }
@@ -146,16 +162,25 @@ class DefaultExtension extends MProvider {
 
     async getPageList(url) {
         var clean = url.replace(/^https?:\/\/[^\/]+/, '');
-        var chapMatch = clean.match(/\/chapters\/([^\/]+)/);
+        // Extract ULID chapter ID robustly
+        var chapMatch = clean.match(/\/chapters\/([A-Z0-9]{26})/);
         var chapId = chapMatch ? chapMatch[1] : clean.replace(/.*chapters\//, '').replace(/\/.*$/, '').trim();
+        if (!chapId) return [];
+
         var slug = `/chapters/${chapId}/images?current_page=1&reading_style=long_strip`;
         var doc = await this.request(slug);
 
         var urls = [];
-        var images = doc.select("#chapter-images img, section img, article img");
+        // Try all common image selectors — confirmed working via FlareSolverr tests
+        var images = doc.select("#chapter-images img, section#chapter-images img, img[src*='compsci88'], img[src*='lowee'], img[src*='weebcentral']");
+        // If no specific selector found, fall back to all imgs in body
+        if (images.length === 0) {
+            images = doc.select("body img[src]");
+        }
         for (var page of images) {
-            var src = page.getSrc || page.attr("src");
-            if (src && !urls.includes(src)) urls.push(src);
+            var src = page.attr("src") || page.attr("data-src") || page.getSrc || "";
+            src = src.trim();
+            if (src && src.startsWith("http") && !urls.includes(src)) urls.push(src);
         }
 
         return urls.map(x => ({ url: x, headers: { Referer: `${this.source.baseUrl}/` } }));
