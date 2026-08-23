@@ -185,9 +185,9 @@ class DefaultExtension extends MProvider {
                     const sEnd = html.indexOf("</script>", sIdx);
                     const packedScript = html.substring(sIdx, sEnd !== -1 ? sEnd : undefined);
                     const unpacked = eval(packedScript.replace(/^eval\(/, "("));
-                    const kMatch = unpacked.match(/guidkey\s*=\s*['"]([^'"]+)['"]/);
+                    const kMatch = unpacked.match(/guidkey\s*=\s*([^;]+);/);
                     if (kMatch) {
-                        guidkey = kMatch[1];
+                        guidkey = eval(kMatch[1]);
                     }
                 }
             } catch (_) {}
@@ -220,12 +220,9 @@ class DefaultExtension extends MProvider {
                         .trim();
 
                     if (rawBody && rawBody.includes("eval(")) {
-                        var d = undefined;
-                        const script = eval(rawBody);
-                        if (typeof script === "string") {
-                            eval(script);
-                        }
-                        if (typeof d !== "undefined" && Array.isArray(d)) {
+                        const unpackedFun = eval(rawBody.replace(/^eval\(/, "("));
+                        const d = new Function(unpackedFun + "; return (typeof d !== 'undefined' ? d : dm5imagefun());")();
+                        if (d && Array.isArray(d)) {
                             for (let img of d) {
                                 if (img && !seen.has(img)) {
                                     seen.add(img);
@@ -248,11 +245,11 @@ class DefaultExtension extends MProvider {
 
         // Fallback: static images in DOM
         const doc = new Document(html);
-        const imgs = doc.querySelectorAll(".reader-main img, #viewer img, .read-container img, img#image");
+        const imgs = doc.querySelectorAll(".reader-main img, #viewer img, .read-container img");
         const fallback = [];
         for (const img of imgs) {
             const src = img.attr("data-src") || img.attr("src") || img.attr("data-original");
-            if (src && !src.includes("logo") && !src.includes("banner")) {
+            if (src && !src.includes("logo") && !src.includes("banner") && !src.includes("loading.gif")) {
                 const fullSrc = src.startsWith("//") ? `https:${src}` : src;
                 fallback.push({
                     url: fullSrc,
