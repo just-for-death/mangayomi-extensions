@@ -165,11 +165,25 @@ class DefaultExtension extends MProvider {
                     const funUrl = `${this.source.baseUrl}/chapterfun.ashx?cid=${cid}&page=${page}`;
                     const funRes = await this.client.get(funUrl, {
                         ...this.getHeaders(),
-                        "Referer": fullUrl
+                        "Referer": fullUrl,
+                        "X-Requested-With": "XMLHttpRequest"
                     });
-                    if (funRes.body && funRes.body.includes("eval(")) {
+                    var rawBody = funRes.body || "";
+                    if (rawBody.indexOf("<pre") !== -1) {
+                        const preMatch = rawBody.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+                        if (preMatch) rawBody = preMatch[1];
+                    }
+                    rawBody = rawBody
+                        .replace(/&lt;/g, "<")
+                        .replace(/&gt;/g, ">")
+                        .replace(/&amp;/g, "&")
+                        .replace(/&quot;/g, '"')
+                        .replace(/&#39;/g, "'")
+                        .trim();
+
+                    if (rawBody && rawBody.includes("eval(")) {
                         var d = undefined;
-                        const script = eval(funRes.body);
+                        const script = eval(rawBody);
                         if (typeof script === "string") {
                             eval(script);
                         }

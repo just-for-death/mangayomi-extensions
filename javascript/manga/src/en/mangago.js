@@ -152,31 +152,40 @@ class DefaultExtension extends MProvider {
     }
 
     async getPageList(url) {
-        const res = await this.client.get(url, this.getHeaders());
+        const fullUrl = url.startsWith('http') ? url : `https://www.mangago.me${url.startsWith('/') ? '' : '/'}${url}`;
+        const res = await this.client.get(fullUrl, this.getHeaders());
         const doc = new Document(res.body);
         const pages = [];
+        const seen = new Set();
 
-        // Check static img tags
-        const imgs = doc.querySelectorAll("#pic_container img, img#comic_page, .page-image img");
-        if (imgs && imgs.length > 0) {
-            for (const img of imgs) {
-                const src = img.attr("data-src") || img.attr("src") || img.attr("data-original");
-                if (src && src.startsWith("http")) {
-                    pages.push(src);
-                }
+        // 1. Check img tags with specific selectors
+        const imgs = doc.querySelectorAll("#pic_container img, img#comic_page, .page-image img, #page_list img, .manga_pic, img[src*='mangapicgallery'], img[data-src*='mangapicgallery']");
+        for (const img of imgs) {
+            const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
+            if (src && src.startsWith("http") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !seen.has(src)) {
+                seen.add(src);
+                pages.push({
+                    url: src,
+                    headers: { "Referer": "https://www.mangago.me/" }
+                });
             }
         }
 
-        // Check if imgsrcs string is in the HTML
+        // 2. Check if imgsrcs string is in the HTML
         const html = res.body || "";
         const match = html.match(/var\s+imgsrcs\s*=\s*['"]([^'"]+)['"]/);
-        if (match && match[1]) {
+        if (match && match[1] && pages.length === 0) {
             try {
-                // Base64 / array decode
                 const raw = atob(match[1]);
                 const urls = raw.split(",").filter(u => u.startsWith("http"));
-                if (urls.length > 0) {
-                    return urls;
+                for (const u of urls) {
+                    if (!seen.has(u)) {
+                        seen.add(u);
+                        pages.push({
+                            url: u,
+                            headers: { "Referer": "https://www.mangago.me/" }
+                        });
+                    }
                 }
             } catch (_) {}
         }
