@@ -165,6 +165,7 @@ class DefaultExtension extends MProvider {
     var res = await new Client().get(link, this.getHeaders());
     var doc = new Document(res.body);
 
+    var urls = [];
     var imgElements = doc.select("chapter-page img, picture img, img[data-src]");
     for (var img of imgElements) {
       var src = img.attr("data-src") || img.attr("src") || img.getSrc || "";
