@@ -171,7 +171,7 @@ class DefaultExtension extends MProvider {
 
   // For manga chapter pages
   async getPageList(url) {
-    var link = `${this.source.baseUrl}${url}`;
+    var link = url.startsWith('http') ? url : `${this.source.baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
     var res = await new Client().get(link, this.getHeaders());
     var doc = new Document(res.body);
@@ -180,8 +180,15 @@ class DefaultExtension extends MProvider {
 
     var pages = doc.select("chapter-page");
     for (var page of pages) {
-      var img = page.selectFirst("img").getSrc;
+      var img = page.selectFirst("img") ? page.selectFirst("img").getSrc : null;
       if (img != null) urls.push(img);
+    }
+    if (urls.length === 0) {
+      var fallbackImgs = doc.select("picture img, div.flex.flex-col img, img");
+      for (var fImg of fallbackImgs) {
+        var src = fImg.getSrc || fImg.attr("data-src") || fImg.attr("src");
+        if (src && !urls.includes(src) && !src.includes("logo") && !src.includes("banner")) urls.push(src);
+      }
     }
 
     return urls;
