@@ -28,10 +28,10 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
-        const items = doc.querySelectorAll(".updatesli") || doc.querySelectorAll(".flex1.listitem") || doc.querySelectorAll("#information li");
+        const items = doc.querySelectorAll(".updatesli, .flex1.listitem, #information li, .pic_list li");
 
         for (const item of items) {
-            const a = item.querySelector("a.thm-effect") || item.querySelector("span.title a") || item.querySelector("a");
+            const a = item.querySelector("a.thm-effect, span.title a, a");
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || a.attr("alt") || (img ? img.attr("alt") : "") || a.text;
@@ -58,10 +58,10 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
-        const items = doc.querySelectorAll(".pic_list .flex1.listitem") || doc.querySelectorAll("#information li");
+        const items = doc.querySelectorAll(".pic_list .flex1.listitem, #information li, .updatesli, .pic_list li");
 
         for (const item of items) {
-            const a = item.querySelector("a.thm-effect") || item.querySelector("a");
+            const a = item.querySelector("a.thm-effect, a");
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
@@ -88,10 +88,10 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
-        const items = doc.querySelectorAll(".pic_list .flex1.listitem") || doc.querySelectorAll("#information li") || doc.querySelectorAll(".uk-grid li");
+        const items = doc.querySelectorAll(".pic_list .flex1.listitem, #information li, .uk-grid li, .pic_list li");
 
         for (const item of items) {
-            const a = item.querySelector("a.thm-effect") || item.querySelector("a");
+            const a = item.querySelector("a.thm-effect, a");
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
@@ -117,20 +117,20 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
 
-        const descElem = doc.querySelector("#item_details .manga-desc") || doc.querySelector("#item_details .m-desc") || doc.querySelector(".description");
+        const descElem = doc.querySelector("#item_details .manga-desc, #item_details .m-desc, .description");
         const description = descElem ? descElem.text.trim() : "";
 
-        const authorElem = doc.querySelector(".manga-author") || doc.querySelector("a[href*='/author/']");
+        const authorElem = doc.querySelector(".manga-author, a[href*='/author/']");
         const author = authorElem ? authorElem.text.trim() : "";
 
-        const genreElems = doc.querySelectorAll(".manga-genres a") || doc.querySelectorAll("a[href*='/genre/']");
+        const genreElems = doc.querySelectorAll(".manga-genres a, a[href*='/genre/']");
         const genres = genreElems ? genreElems.map(g => g.text.trim()).filter(Boolean) : [];
 
         const chapters = [];
-        const rows = doc.querySelectorAll("table#chapter_table tbody tr") || doc.querySelectorAll("#chapter_table tr");
+        const rows = doc.querySelectorAll("table#chapter_table tbody tr, #chapter_table tr, .chapter_list tr");
 
         for (const row of rows) {
-            const a = row.querySelector("a.chpt") || row.querySelector("a[href*='/read-manga/']");
+            const a = row.querySelector("a.chpt, a[href*='/read-manga/'], a");
             if (a) {
                 const name = a.text.trim();
                 const link = a.attr("href");
@@ -157,7 +157,7 @@ class DefaultExtension extends MProvider {
         const pages = [];
 
         // Check static img tags
-        const imgs = doc.querySelectorAll("#pic_container img") || doc.querySelectorAll("img#comic_page") || doc.querySelectorAll(".page-image img");
+        const imgs = doc.querySelectorAll("#pic_container img, img#comic_page, .page-image img");
         if (imgs && imgs.length > 0) {
             for (const img of imgs) {
                 const src = img.attr("data-src") || img.attr("src") || img.attr("data-original");
