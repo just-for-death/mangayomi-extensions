@@ -49,12 +49,16 @@ class DefaultExtension extends MProvider {
       if (!name || seen.has(link)) continue;
       seen.add(link);
 
+      const slug = parts[1];
       let imageUrl = "";
       const parent = a.parentElement;
       const grandParent = parent ? parent.parentElement : null;
       const img = (grandParent ? grandParent.querySelector("img") : null) || (parent ? parent.querySelector("img") : null);
       if (img) {
         imageUrl = img.attr("src") || img.attr("data-src") || "";
+      }
+      if (!imageUrl || imageUrl.includes("loading") || !imageUrl.startsWith("http")) {
+        imageUrl = `https://cdn.readcomicsonline.ru/uploads/manga/${slug}/cover/cover_250x350.jpg`;
       }
 
       list.push({
@@ -88,12 +92,16 @@ class DefaultExtension extends MProvider {
       if (!name || seen.has(link)) continue;
       seen.add(link);
 
+      const slug = parts[1];
       let imageUrl = "";
       const parent = a.parentElement;
       const grandParent = parent ? parent.parentElement : null;
       const img = (grandParent ? grandParent.querySelector("img") : null) || (parent ? parent.querySelector("img") : null);
       if (img) {
         imageUrl = img.attr("src") || img.attr("data-src") || "";
+      }
+      if (!imageUrl || imageUrl.includes("loading") || !imageUrl.startsWith("http")) {
+        imageUrl = `https://cdn.readcomicsonline.ru/uploads/manga/${slug}/cover/cover_250x350.jpg`;
       }
 
       list.push({
@@ -147,7 +155,11 @@ class DefaultExtension extends MProvider {
     const name = titleEl ? titleEl.text.trim() : "";
 
     const imgEl = doc.querySelector(".boxed img") || doc.querySelector("img[src*='cover']");
-    const imageUrl = imgEl ? (imgEl.attr("src") || imgEl.attr("data-src") || "") : "";
+    let imageUrl = imgEl ? (imgEl.attr("src") || imgEl.attr("data-src") || "") : "";
+    if (!imageUrl || !imageUrl.startsWith("http")) {
+      const slug = fullUrl.replace("https://readcomicsonline.ru/comic/", "").split("/")[0].split("?")[0];
+      imageUrl = `https://cdn.readcomicsonline.ru/uploads/manga/${slug}/cover/cover_250x350.jpg`;
+    }
 
     const descEl = doc.querySelector(".manga-details .p-desc") || doc.querySelector(".panel-body p");
     const description = descEl ? descEl.text.trim() : "";

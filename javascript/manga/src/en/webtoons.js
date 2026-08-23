@@ -156,25 +156,55 @@ class DefaultExtension extends MProvider {
 
     // chapters
     const chapters = [];
-    const desktopLinks = doc.select("ul#_listUl li a, ul.detail_list li a, li._episodeItem a, a[href*='/viewer']");
-    if (desktopLinks.length > 0) {
-      for (const el of desktopLinks) {
+    const seenCh = new Set();
+
+    const parsePageEpisodes = (d) => {
+      const links = d.select("ul#_listUl li a, ul.detail_list li a, li._episodeItem a, a[href*='/viewer']");
+      for (const el of links) {
         var chUrl = el.getHref || el.attr("href") || "";
         if (!chUrl || !chUrl.includes("/viewer")) continue;
         chUrl = chUrl.replace(/&amp;/g, "&");
         if (!chUrl.startsWith("http")) {
           chUrl = `https://www.webtoons.com${chUrl.startsWith("/") ? "" : "/"}${chUrl}`;
         }
+        if (seenCh.has(chUrl)) continue;
+        seenCh.add(chUrl);
+
         const nameEl = el.selectFirst("span.subj, span.ellipsis, .tx") || el.selectFirst("img");
         const name = (nameEl ? (nameEl.text || nameEl.attr("alt")) : "Episode").trim();
         const dateEl = el.selectFirst("span.date");
         const dateUpload = dateEl ? dateEl.text.trim() : "";
-        if (!chapters.some(c => c.url === chUrl)) {
-          chapters.push({
-            name: name || "Episode",
-            url: chUrl,
-            dateUpload: dateUpload
-          });
+        chapters.push({
+          name: name || "Episode",
+          url: chUrl,
+          dateUpload: dateUpload
+        });
+      }
+    };
+
+    parsePageEpisodes(doc);
+
+    // Fetch remaining pages if pagination exists
+    const maxPageEls = doc.select(".paginate a, .paginate span");
+    let maxPages = 1;
+    if (maxPageEls && maxPageEls.length > 0) {
+      for (const p of maxPageEls) {
+        const pNum = parseInt(p.text.trim());
+        if (!isNaN(pNum) && pNum > maxPages) {
+          maxPages = pNum;
+        }
+      }
+    }
+
+    if (maxPages > 1) {
+      for (let p = 2; p <= Math.min(maxPages, 100); p++) {
+        try {
+          const pUrl = `${url}${url.includes('?') ? '&' : '?'}page=${p}`;
+          const pRes = await new Client().get(pUrl, this.getHeaders(pUrl));
+          const pDoc = new Document(pRes.body);
+          parsePageEpisodes(pDoc);
+        } catch (_) {
+          break;
         }
       }
     }
