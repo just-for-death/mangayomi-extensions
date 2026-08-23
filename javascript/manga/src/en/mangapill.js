@@ -93,16 +93,16 @@ class DefaultExtension extends MProvider {
   }
 
   async search(query, page, filters) {
-    var type = filters[0]?.values[filters[0].state].value ?? "";
-    var status = filters[1]?.values[filters[1].state].value ?? "";
+    var type = (filters && filters[0]?.values && filters[0]?.state != null) ? filters[0].values[filters[0].state]?.value ?? "" : "";
+    var status = (filters && filters[1]?.values && filters[1]?.state != null) ? filters[1].values[filters[1].state]?.value ?? "" : "";
 
     var genre = "";
-    if (filters && filters[2]) {
+    if (filters && filters[2] && Array.isArray(filters[2].state)) {
       for (var filter of filters[2].state) {
-        if (filter.state == true) genre += `&genre=${filter.value}`;
+        if (filter && filter.state == true) genre += `&genre=${filter.value}`;
       }
     }
-    return await this.searchManga(query, status, type, genre, page);
+    return await this.searchManga(query || "", status, type, genre, page);
   }
 
   async getMangaDetail(slug) {
