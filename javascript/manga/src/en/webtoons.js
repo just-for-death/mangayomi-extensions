@@ -133,35 +133,26 @@ class DefaultExtension extends MProvider {
     let res = await new Client().get(url);
     let doc = new Document(res.body);
 
-    const info = doc.selectFirst("div.cont_box");
-    const name = info.selectFirst("h1.subj, h3.subj").text;
-    const genre =
-      Array.from(info.select("p.genre")).map((el) => el.text) != ""
-        ? Array.from(info.select("p.genre")).map((el) => el.text)
-        : [info.selectFirst("div.info h2").text];
-    const author =
-      info
-        .selectFirst("div.author_area")
-        .text.replace(/\s+/g, " ")
-        .replace(/author info/g, "")
-        .trim() ?? info.selectFirst("a.author").text;
+    const nameEl = doc.selectFirst("h1.subj, h3.subj, .subj_info h1, .detail_header .subj, .info h1, .subj");
+    const name = nameEl ? nameEl.text.trim() : "Webtoon";
 
-    const dayInfoText = info?.selectFirst("p.day_info")?.text || "";
-    const status =
-      dayInfoText.includes("UP") ||
-      dayInfoText.includes("EVERY") ||
-      dayInfoText.includes("NOUVEAU")
-        ? 0
-        : dayInfoText.includes("END") ||
-            dayInfoText.includes("TERMINÉ") ||
-            dayInfoText.includes("COMPLETED")
-          ? 1
-          : -1; // UNKNOWN
+    const genre = [];
+    const genreEls = doc.select("p.genre, .genre, span.genre");
+    for (const g of genreEls) {
+      const t = g.text.trim();
+      if (t && !genre.includes(t)) genre.push(t);
+    }
 
-    const description = info
-      .selectFirst("p.summary")
-      .text.replace(/\s+/g, " ")
-      .trim();
+    const authorEl = doc.selectFirst("div.author_area, a.author, .author_area, .author");
+    const author = authorEl ? authorEl.text.replace(/\s+/g, " ").replace(/author info/g, "").trim() : "";
+
+    const dayInfoEl = doc.selectFirst("p.day_info, .day_info, .txt_ico_up");
+    const dayInfoText = dayInfoEl ? dayInfoEl.text : "";
+    const status = (dayInfoText.includes("UP") || dayInfoText.includes("EVERY") || dayInfoText.includes("NOUVEAU")) ? 0 :
+                   (dayInfoText.includes("END") || dayInfoText.includes("TERMINÉ") || dayInfoText.includes("COMPLETED")) ? 1 : 0;
+
+    const descEl = doc.selectFirst("p.summary, .summary, .detail_info p");
+    const description = descEl ? descEl.text.replace(/\s+/g, " ").trim() : "";
 
     // chapters
     const chapters = [];
@@ -224,7 +215,7 @@ class DefaultExtension extends MProvider {
 
     return {
       name,
-      link: cleanUrl,
+      link: url,
       genre,
       description,
       author,
