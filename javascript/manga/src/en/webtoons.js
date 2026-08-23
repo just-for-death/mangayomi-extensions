@@ -154,8 +154,12 @@ class DefaultExtension extends MProvider {
     const desktopLinks = doc.select("ul#_listUl li a, ul.detail_list li a, li._episodeItem a, a[href*='/viewer']");
     if (desktopLinks.length > 0) {
       for (const el of desktopLinks) {
-        const chUrl = el.getHref;
+        var chUrl = el.getHref || el.attr("href") || "";
         if (!chUrl || !chUrl.includes("/viewer")) continue;
+        chUrl = chUrl.replace(/&amp;/g, "&");
+        if (!chUrl.startsWith("http")) {
+          chUrl = `https://www.webtoons.com${chUrl.startsWith("/") ? "" : "/"}${chUrl}`;
+        }
         const nameEl = el.selectFirst("span.subj, span.ellipsis, .tx") || el.selectFirst("img");
         const name = (nameEl ? (nameEl.text || nameEl.attr("alt")) : "Episode").trim();
         const dateEl = el.selectFirst("span.date");
@@ -180,19 +184,24 @@ class DefaultExtension extends MProvider {
         for (const el of doc.select("ul#_episodeList li[id*=episode] a, ul._episodeList li a, li[id*=episode] a")) {
           const mUrl = el.getHref.replace(this.getMobileUrl(), this.getBaseUrl());
           let name = el.selectFirst(".sub_title > span.ellipsis, .sub_title")?.text || "Episode";
-          const chapterElement = el.selectFirst("div.row > div.num");
-          if (chapterElement) {
-            const chapterText = chapterElement.text;
-            const hashIndex = chapterText.indexOf("#");
-            if (hashIndex > -1) {
-              name += " Ch. " + chapterText.substring(hashIndex + 1);
-            }
+        const linkEl = el.selectFirst("a");
+        if (!linkEl) continue;
+        var mUrl = linkEl.getHref || linkEl.attr("href") || "";
+        if (mUrl) {
+          mUrl = mUrl.replace(/&amp;/g, "&");
+          if (!mUrl.startsWith("http")) {
+            mUrl = `https://www.webtoons.com${mUrl.startsWith("/") ? "" : "/"}${mUrl}`;
+          }
+          const numEl = el.selectFirst(".tx");
+          var name = linkEl.selectFirst(".subj span")?.text || linkEl.selectFirst(".subj")?.text || "";
+          if (numEl) {
+            name = `#${numEl.text.trim()} ${name.trim()}`;
           }
           const dateUpload = el.selectFirst(".sub_info .date")?.text || "";
 
           if (!chapters.some(c => c.url === mUrl)) {
             chapters.push({
-              name: name.trim(),
+              name: name.trim() || "Episode",
               url: mUrl,
               dateUpload: dateUpload
             });
@@ -203,7 +212,7 @@ class DefaultExtension extends MProvider {
 
     return {
       name,
-      link: url,
+      link: cleanUrl,
       genre,
       description,
       author,
@@ -258,16 +267,6 @@ class DefaultExtension extends MProvider {
       id: [
         "Jan",
         "Feb",
-        "Mar",
-        "Apr",
-        "Mei",
-        "Jun",
-        "Jul",
-        "Agt",
-        "Sep",
-        "Okt",
-        "Nov",
-        "Des",
       ],
       th: [
         "ม.ค.",
@@ -348,13 +347,20 @@ class DefaultExtension extends MProvider {
   }
 
   async getPageList(url) {
-    const res = await new Client().get(url);
+    const cleanUrl = url.replace(/&amp;/g, "&");
+    const res = await new Client().get(cleanUrl, this.getHeaders(cleanUrl));
     const doc = new Document(res.body);
     const urls = [];
-    const imageElement = doc.selectFirst("div#_imageList");
-    const img_urls = imageElement.select("img");
-    for (let i = 0; i < img_urls.length; i++) {
-      urls.push(img_urls[i].attr("data-url"));
+    const images = doc.querySelectorAll("div#_imageList img, .viewer_lst img, .viewer_img img, img[data-url]");
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      const src = img.attr("data-url") || img.attr("src") || "";
+      if (src && !src.includes("sp_error") && !src.includes("banner") && !src.includes("logo")) {
+        urls.push({
+          url: src.trim(),
+          headers: { "Referer": "https://www.webtoons.com/" }
+        });
+      }
     }
     return urls;
   }
