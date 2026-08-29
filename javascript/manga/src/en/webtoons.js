@@ -51,7 +51,8 @@ class DefaultExtension extends MProvider {
     )) {
       const img = el.selectFirst("img");
       if (!img) continue;
-      const imageUrl = img.getSrc || img.attr("src") || "";
+      let imageUrl = img.getSrc || img.attr("src") || "";
+      if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
       const titleEl = el.selectFirst("strong.title, p.subj, .subj, strong, p.title");
       const name = titleEl ? titleEl.text.trim() : "";
       const link = el.getHref || el.attr("href") || "";
@@ -333,12 +334,16 @@ class DefaultExtension extends MProvider {
     let year;
     // Handle formats based on the language
     switch (lang) {
-      case "zh":
+      case "zh": {
         // Expected format: yyyy年MM月dd日
         const match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-        year = match[1];
-        month = match[2];
-        day = match[3];
+        if (match) {
+          year = match[1];
+          month = match[2];
+          day = match[3];
+        }
+        break;
+      }
       case "de":
         // Expected format: dd.MM.yyyy
         parts = dateStr.split(".");
@@ -347,6 +352,7 @@ class DefaultExtension extends MProvider {
           day = parts[0];
           year = parts[2];
         }
+        break;
       case "es":
       case "fr":
       case "id":

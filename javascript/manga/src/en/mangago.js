@@ -6,7 +6,7 @@ const mangayomiSources = [{
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "pkgPath": "manga/src/en/mangago.js"
 }];
 
@@ -23,6 +23,12 @@ class DefaultExtension extends MProvider {
         };
     }
 
+    _absUrl(link) {
+        if (!link) return "";
+        if (link.startsWith("http")) return link;
+        return `https://www.mangago.me${link.startsWith("/") ? "" : "/"}${link}`;
+    }
+
     async getPopular(page) {
         const url = `https://www.mangago.me/genre/all/${page}/?f=1&o=1&sortby=view&e=`;
         const res = await this.client.get(url, this.getHeaders());
@@ -35,22 +41,15 @@ class DefaultExtension extends MProvider {
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || a.attr("alt") || (img ? img.attr("alt") : "") || a.text;
-                const link = a.attr("href");
-                const imageUrl = img ? (img.attr("data-src") || img.attr("src")) : "";
+                const link = this._absUrl(a.attr("href"));
+                const imageUrl = img ? (img.attr("data-src") || img.attr("src") || "") : "";
                 if (title && link) {
-                    list.push({
-                        name: title.trim(),
-                        imageUrl: imageUrl,
-                        link: link
-                    });
+                    list.push({ name: title.trim(), imageUrl, link });
                 }
             }
         }
 
-        return {
-            list: list,
-            hasNextPage: list.length >= 24
-        };
+        return { list, hasNextPage: list.length >= 24 };
     }
 
     async getLatestUpdates(page) {
@@ -65,22 +64,15 @@ class DefaultExtension extends MProvider {
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
-                const link = a.attr("href");
-                const imageUrl = img ? (img.attr("data-src") || img.attr("src")) : "";
+                const link = this._absUrl(a.attr("href"));
+                const imageUrl = img ? (img.attr("data-src") || img.attr("src") || "") : "";
                 if (title && link) {
-                    list.push({
-                        name: title.trim(),
-                        imageUrl: imageUrl,
-                        link: link
-                    });
+                    list.push({ name: title.trim(), imageUrl, link });
                 }
             }
         }
 
-        return {
-            list: list,
-            hasNextPage: list.length >= 24
-        };
+        return { list, hasNextPage: list.length >= 24 };
     }
 
     async search(query, page, filters) {
@@ -96,28 +88,28 @@ class DefaultExtension extends MProvider {
             const img = item.querySelector("img");
             if (a) {
                 const title = a.attr("title") || (img ? img.attr("alt") : "") || a.text;
-                const link = a.attr("href");
-                const imageUrl = img ? (img.attr("data-src") || img.attr("src")) : "";
+                const link = this._absUrl(a.attr("href"));
+                const imageUrl = img ? (img.attr("data-src") || img.attr("src") || "") : "";
                 if (title && link && !seen.has(link)) {
                     seen.add(link);
-                    list.push({
-                        name: title.trim(),
-                        imageUrl: imageUrl,
-                        link: link.startsWith('http') ? link : `https://www.mangago.me${link.startsWith('/') ? link : '/' + link}`
-                    });
+                    list.push({ name: title.trim(), imageUrl, link });
                 }
             }
         }
 
-        return {
-            list: list,
-            hasNextPage: list.length >= 10
-        };
+        return { list, hasNextPage: list.length >= 10 };
     }
 
     async getDetail(url) {
-        const res = await this.client.get(url, this.getHeaders());
+        const fullUrl = this._absUrl(url);
+        const res = await this.client.get(fullUrl, this.getHeaders());
         const doc = new Document(res.body);
+
+        const titleEl = doc.querySelector("h1.manga-title, #item_details h1, h1");
+        const name = titleEl ? titleEl.text.trim() : "";
+
+        const coverEl = doc.querySelector(".cover img, .book-cover img, #item_details img");
+        const imageUrl = coverEl ? (coverEl.attr("data-src") || coverEl.attr("src") || "") : "";
 
         const descElem = doc.querySelector("#item_details .manga-desc, #item_details .m-desc, .description");
         const description = descElem ? descElem.text.trim() : "";
@@ -126,7 +118,7 @@ class DefaultExtension extends MProvider {
         const author = authorElem ? authorElem.text.trim() : "";
 
         const genreElems = doc.querySelectorAll(".manga-genres a, a[href*='/genre/']");
-        const genres = genreElems ? genreElems.map(g => g.text.trim()).filter(Boolean) : [];
+        const genre = genreElems ? genreElems.map(g => g.text.trim()).filter(Boolean) : [];
 
         const chapters = [];
         const rows = doc.querySelectorAll("table#chapter_table tbody tr, #chapter_table tr, .chapter_list tr");
@@ -134,27 +126,19 @@ class DefaultExtension extends MProvider {
         for (const row of rows) {
             const a = row.querySelector("a.chico, a.chpt, a[href*='/chapter/'], a[href*='/read-manga/'], td:first-child a");
             if (a) {
-                const name = a.text.trim();
-                const link = a.attr("href");
-                if (name && link && !link.includes("/home/people/") && !link.includes("/upload/")) {
-                    chapters.push({
-                        name: name,
-                        url: link
-                    });
+                const chName = a.text.trim();
+                const chLink = this._absUrl(a.attr("href"));
+                if (chName && chLink && !chLink.includes("/home/people/") && !chLink.includes("/upload/")) {
+                    chapters.push({ name: chName, url: chLink });
                 }
             }
         }
 
-        return {
-            description: description,
-            author: author,
-            genre: genres,
-            chapters: chapters
-        };
+        return { name, title: name, imageUrl, description, author, genre, chapters };
     }
 
     async getPageList(url) {
-        const fullUrl = url.startsWith('http') ? url : `https://www.mangago.me${url.startsWith('/') ? '' : '/'}${url}`;
+        const fullUrl = this._absUrl(url);
         const res = await this.client.get(fullUrl, this.getHeaders());
         const html = res.body || "";
         const doc = new Document(html);
@@ -168,10 +152,7 @@ class DefaultExtension extends MProvider {
                 if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !src.includes("loader") && !seen.has(src)) {
                     if (src.includes("mangapicgallery.com") || src.includes("/r/newpiclink/") || src.includes("/r/piclink/")) {
                         seen.add(src);
-                        pages.push({
-                            url: src,
-                            headers: { "Referer": "https://www.mangago.me/" }
-                        });
+                        pages.push({ url: src, headers: { "Referer": "https://www.mangago.me/" } });
                     }
                 }
             }
@@ -179,17 +160,13 @@ class DefaultExtension extends MProvider {
 
         extractImgs(doc);
 
-        // Fallback for any image containers on Mangago
         if (pages.length === 0) {
             const imgs = doc.querySelectorAll("#pic_container img, #page_list img, .page-image img, img[id^='page'], img#comic_page");
             for (const img of imgs) {
                 const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
                 if (src && src.startsWith("http") && !seen.has(src)) {
                     seen.add(src);
-                    pages.push({
-                        url: src,
-                        headers: { "Referer": "https://www.mangago.me/" }
-                    });
+                    pages.push({ url: src, headers: { "Referer": "https://www.mangago.me/" } });
                 }
             }
         }

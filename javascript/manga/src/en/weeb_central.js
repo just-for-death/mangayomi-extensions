@@ -158,7 +158,7 @@ class DefaultExtension extends MProvider {
                 chapters.push({ name, url: chapUrl, dateUpload });
             }
         }
-        return { description, imageUrl, author, genre, status, chapters };
+        return { name: "", title: "", description, imageUrl, author, genre, status, chapters };
     }
 
     async getPageList(url) {

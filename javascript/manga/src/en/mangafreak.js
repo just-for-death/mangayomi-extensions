@@ -183,6 +183,7 @@ class DefaultExtension extends MProvider {
         }
 
         return {
+            name: title.trim(),
             title: title.trim(),
             description: description.trim(),
             imageUrl: imageUrl,
