@@ -47,7 +47,7 @@ class DefaultExtension extends MProvider {
       const results = data.results || [];
       const list = results.map((b) => ({
         name: b.title || "Untitled",
-        imageUrl: b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "",
+        imageUrl: b.image_server ? `${b.image_server}${b.id}/cover.jpg` : "",
         link: `https://9hentai.so/g/${b.id}/`
       }));
 
@@ -77,7 +77,7 @@ class DefaultExtension extends MProvider {
       const results = data.results || [];
       const list = results.map((b) => ({
         name: b.title || "Untitled",
-        imageUrl: b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "",
+        imageUrl: b.image_server ? `${b.image_server}${b.id}/cover.jpg` : "",
         link: `https://9hentai.so/g/${b.id}/`
       }));
 
@@ -107,7 +107,7 @@ class DefaultExtension extends MProvider {
       const results = data.results || [];
       const list = results.map((b) => ({
         name: b.title || "Untitled",
-        imageUrl: b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "",
+        imageUrl: b.image_server ? `${b.image_server}${b.id}/cover.jpg` : "",
         link: `https://9hentai.so/g/${b.id}/`
       }));
 
@@ -129,7 +129,7 @@ class DefaultExtension extends MProvider {
       const b = data.results || data;
 
       const tags = (b.tags || []).map((t) => t.name || t);
-      const imageUrl = b.image_server ? `${b.image_server}${b.id}/cover-l.jpg` : "";
+      const imageUrl = b.image_server ? `${b.image_server}${b.id}/cover.jpg` : "";
 
       return {
         name: b.title || "Untitled",

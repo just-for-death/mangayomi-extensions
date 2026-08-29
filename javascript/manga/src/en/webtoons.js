@@ -173,8 +173,17 @@ class DefaultExtension extends MProvider {
 
         const nameEl = el.selectFirst("span.subj, span.ellipsis, .tx") || el.selectFirst("img");
         const name = (nameEl ? (nameEl.text || nameEl.attr("alt")) : "Episode").trim();
-        const dateEl = el.selectFirst("span.date");
-        const dateUpload = dateEl ? dateEl.text.trim() : "";
+        const dateEl = el.selectFirst("span.date, span.tx");
+        var dateUpload = "";
+        if (dateEl && dateEl.text) {
+          const t = dateEl.text.trim();
+          const parsed = Date.parse(t);
+          if (!isNaN(parsed) && parsed > 0) {
+            dateUpload = parsed.toString();
+          } else {
+            dateUpload = t;
+          }
+        }
         chapters.push({
           name: name || "Episode",
           url: chUrl,

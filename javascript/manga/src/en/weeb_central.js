@@ -132,9 +132,33 @@ class DefaultExtension extends MProvider {
         for (var chap of chapList) {
             var spanEl = chap.selectFirst("span.grow.flex.items-center.gap-2");
             var innerSpan = spanEl ? spanEl.selectFirst("span") : null;
-            var name = innerSpan ? innerSpan.text.trim() : "Chapter";
-            var timeEl = chap.selectFirst("time.text-datetime");
-            var dateUpload = timeEl ? new Date(timeEl.text).valueOf().toString() : "";
+            var timeEl = chap.selectFirst("time.text-datetime") || chap.selectFirst("time");
+            var dateUpload = "";
+            if (timeEl) {
+                var dt = timeEl.attr("datetime") || (timeEl.text || "").trim();
+                if (dt) {
+                    var parsed = Date.parse(dt);
+                    if (!isNaN(parsed) && parsed > 0) {
+                        dateUpload = parsed.toString();
+                    } else {
+                        var now = Date.now();
+                        var numMatch = dt.match(/(\d+)\s+(second|minute|hour|day|week|month|year)/i);
+                        if (numMatch) {
+                            var n = parseInt(numMatch[1]);
+                            var unit = numMatch[2].toLowerCase();
+                            var mult = 1000;
+                            if (unit.startsWith("second")) mult = 1000;
+                            else if (unit.startsWith("minute")) mult = 60 * 1000;
+                            else if (unit.startsWith("hour")) mult = 3600 * 1000;
+                            else if (unit.startsWith("day")) mult = 86400 * 1000;
+                            else if (unit.startsWith("week")) mult = 7 * 86400 * 1000;
+                            else if (unit.startsWith("month")) mult = 30 * 86400 * 1000;
+                            else if (unit.startsWith("year")) mult = 365 * 86400 * 1000;
+                            dateUpload = (now - (n * mult)).toString();
+                        }
+                    }
+                }
+            }
             var aEl = chap.selectFirst("a");
             var inputEl = chap.selectFirst("input");
             // Use attr("href") — more reliable than .getHref in QuickJS DOM
