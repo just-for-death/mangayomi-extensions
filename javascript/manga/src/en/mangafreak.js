@@ -85,6 +85,43 @@ class DefaultExtension extends MProvider {
         };
     }
 
+
+    getFilterList() {
+        return [
+            {
+                type_name: "SelectFilter",
+                name: "Status",
+                state: 0,
+                values: [
+                    { type_name: "SelectOption", name: "All", value: "All" },
+                    { type_name: "SelectOption", name: "Completed", value: "Completed" },
+                    { type_name: "SelectOption", name: "Ongoing", value: "Ongoing" }
+                ]
+            },
+            {
+                type_name: "SelectFilter",
+                name: "SortBy",
+                state: 0,
+                values: [
+                    { type_name: "SelectOption", name: "Popularity", value: "Popularity" },
+                    { type_name: "SelectOption", name: "Latest", value: "Latest" },
+                    { type_name: "SelectOption", name: "A-Z", value: "A-Z" }
+                ]
+            },
+            {
+                type_name: "SelectFilter",
+                name: "Type",
+                state: 0,
+                values: [
+                    { type_name: "SelectOption", name: "All", value: "All" },
+                    { type_name: "SelectOption", name: "Manga", value: "Manga" },
+                    { type_name: "SelectOption", name: "Manhwa", value: "Manhwa" },
+                    { type_name: "SelectOption", name: "Manhua", value: "Manhua" }
+                ]
+            }
+        ];
+    }
+
     async search(query, page, filters) {
         // When no query is provided but filters are active, use the genre browse URL
         // with query params (ww3.mangafreak.me supports ?Status=X&SortBy=Y)
@@ -94,9 +131,12 @@ class DefaultExtension extends MProvider {
             let typeParam = '';
             if (filters && Array.isArray(filters)) {
                 for (const f of filters) {
-                    if (f.name === 'Status' && f.value && f.value !== 'All') statusParam = f.value;
-                    if (f.name === 'SortBy' && f.value && f.value !== 'Popularity') sortParam = f.value;
-                    if (f.name === 'Type' && f.value && f.value !== 'All') typeParam = f.value;
+                    if (f.type_name === 'SelectFilter' && f.values && f.values.length > f.state) {
+                        const val = f.values[f.state].value;
+                        if (f.name === 'Status' && val !== 'All') statusParam = val;
+                        if (f.name === 'SortBy' && val !== 'Popularity') sortParam = val;
+                        if (f.name === 'Type' && val !== 'All') typeParam = val;
+                    }
                 }
             }
             let qs = '';

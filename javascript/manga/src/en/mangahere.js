@@ -87,6 +87,26 @@ class DefaultExtension extends MProvider {
         };
     }
 
+
+    getFilterList() {
+        return [
+            {
+                type_name: "HeaderFilter",
+                name: "No filters available for this source"
+            }
+        ];
+    }
+
+  
+    getFilterList() {
+        return [
+            {
+                type_name: "HeaderFilter",
+                name: "No filters available for this source"
+            }
+        ];
+    }
+
     async search(query, page, filters) {
         const url = `https://fanfox.net/search?title=${encodeURIComponent(query)}&page=${page}`;
         const res = await this.client.get(url, this.getHeaders());
