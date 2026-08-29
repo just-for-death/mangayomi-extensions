@@ -152,7 +152,19 @@ class DefaultExtension extends MProvider {
         const seenLinks = new Set();
 
         for (const a of rows) {
-            const name = a.attr("title") || a.text;
+            const title3El = a.selectFirst ? a.selectFirst(".title-3, p.title-3") : a.querySelector(".title-3, p.title-3");
+            const title2El = a.selectFirst ? a.selectFirst(".title-2, p.title-2, span.title-2") : a.querySelector(".title-2, p.title-2, span.title-2");
+            var name = title3El ? title3El.text.trim() : (a.attr("title") || a.text.trim());
+            var dateUpload = "";
+            if (title2El) {
+                var dt = title2El.text.trim();
+                var parsed = Date.parse(dt);
+                if (!isNaN(parsed) && parsed > 0) {
+                    dateUpload = parsed.toString();
+                } else {
+                    dateUpload = dt;
+                }
+            }
             const link = a.attr("href");
             if (name && link && (link.includes('/c') || link.includes('/manga/')) && !link.includes('/directory/') && !link.includes('/comichistory/') && !link.includes('/author/')) {
                 const fullLink = link.startsWith('http') 
@@ -162,7 +174,8 @@ class DefaultExtension extends MProvider {
                     seenLinks.add(fullLink);
                     chapters.push({
                         name: name.trim(),
-                        url: fullLink
+                        url: fullLink,
+                        dateUpload: dateUpload
                     });
                 }
             }
