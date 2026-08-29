@@ -9,7 +9,7 @@ const mangayomiSources = [
       "https://www.google.com/s2/favicons?sz=64&domain=https://mangapill.com/",
     "typeSource": "single",
     "isManga": true,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "manga/src/en/mangapill.js",
@@ -51,7 +51,7 @@ class DefaultExtension extends MProvider {
       var a = manga.selectFirst("a[href*='/manga/']");
       var img = manga.selectFirst("img");
       if (a && img) {
-        var link = a.getHref;
+        var link = a.getHref || a.attr("href") || "";
         var imageUrl = img.getSrc || img.attr("data-src") || img.attr("src") || "";
         var nameDiv = manga.selectFirst("div.font-black, div.font-bold, .line-clamp-2, a.mb-2");
         var name = (nameDiv ? nameDiv.text : a.text).trim();
@@ -110,21 +110,35 @@ class DefaultExtension extends MProvider {
     var baseUrl = this.source.baseUrl;
     if (slug.includes(baseUrl)) slug = slug.replace(baseUrl, "");
 
-    var link = `${baseUrl}${slug}`;
+    var link = `${baseUrl}${slug.startsWith('/') ? slug : '/' + slug}`;
     var res = await new Client().get(link, this.getHeaders());
     var doc = new Document(res.body);
 
-    var mangaName = doc.selectFirst(".mb-3 .font-bold.text-lg").text;
-    if (doc.selectFirst(".mb-3 .text-sm.text-secondary") && lang == 2)
-      mangaName = doc.selectFirst(".mb-3 .text-sm.text-secondary").text;
-    var description = doc
-      .selectFirst("meta[name='description']")
-      .attr("content");
-    var imageUrl = doc.selectFirst(".w-full.h-full").getSrc;
-    var statusText = doc
-      .select(".grid.grid-cols-1 > div")[1]
-      .selectFirst("div").text;
-    var status = this.statusCode(statusText);
+    // Safe title extraction
+    var nameEl = doc.selectFirst(".mb-3 .font-bold.text-lg");
+    var mangaName = nameEl ? nameEl.text : "";
+    var altEl = doc.selectFirst(".mb-3 .text-sm.text-secondary");
+    if (altEl && lang == 2) mangaName = altEl.text;
+
+    // Safe description extraction
+    var metaEl = doc.selectFirst("meta[name='description']");
+    var description = metaEl ? metaEl.attr("content") : "";
+
+    // Safe image extraction
+    var imgEl = doc.selectFirst(".w-full.h-full, img.object-cover");
+    var imageUrl = imgEl ? (imgEl.getSrc || imgEl.attr("src") || imgEl.attr("data-src") || "") : "";
+    if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
+
+    // Status - safe access
+    var statusText = "";
+    try {
+      var gridDivs = doc.select(".grid.grid-cols-1 > div");
+      if (gridDivs && gridDivs.length > 1) {
+        var statusDiv = gridDivs[1].selectFirst("div");
+        if (statusDiv) statusText = statusDiv.text;
+      }
+    } catch (_) {}
+    var status = this.statusCode(statusText.toLowerCase());
 
     var genre = [];
     var genreList = doc.select("a.mr-1");
@@ -136,11 +150,15 @@ class DefaultExtension extends MProvider {
     var chapList = doc.select("div.my-3.grid > a");
     for (var chap of chapList) {
       var name = chap.text;
-      var url = chap.getHref;
-      chapters.push({ name, url });
+      var chapUrl = chap.getHref || chap.attr("href") || "";
+      if (chapUrl && !chapUrl.startsWith("http")) {
+        chapUrl = `${baseUrl}${chapUrl.startsWith('/') ? chapUrl : '/' + chapUrl}`;
+      }
+      chapters.push({ name, url: chapUrl });
     }
     return {
       name: mangaName,
+      title: mangaName,
       description,
       link,
       imageUrl,
@@ -153,12 +171,11 @@ class DefaultExtension extends MProvider {
   async getDetail(url) {
     return await this.getMangaDetail(url);
   }
-  // For anime episode video list
+
   async getVideoList(url) {
     throw new Error("getVideoList not implemented");
   }
 
-  // For manga chapter pages
   async getPageList(url) {
     var link = url.startsWith('http') ? url : `${this.source.baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
