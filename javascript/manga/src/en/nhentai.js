@@ -67,10 +67,47 @@ class DefaultExtension extends MProvider {
     return await this.getPopular(page);
   }
 
+
+  getFilterList() {
+    return [
+      {
+        type_name: "SelectFilter",
+        name: "Sort By",
+        state: 0,
+        values: [
+          { type_name: "SelectOption", name: "Recent", value: "" },
+          { type_name: "SelectOption", name: "Popular: All Time", value: "popular" },
+          { type_name: "SelectOption", name: "Popular: Today", value: "popular-today" },
+          { type_name: "SelectOption", name: "Popular: Week", value: "popular-week" }
+        ]
+      }
+    ];
+  }
+
   async search(query, page, filters) {
-    const url = query && query.trim().length > 0
-      ? `https://nhentai.net/search/?q=${encodeURIComponent(query.trim())}&page=${page}`
-      : `https://nhentai.net/?page=${page}`;
+    let sort = "";
+    if (filters && filters.length > 0) {
+      const f = filters[0];
+      if (f.type_name === "SelectFilter" && f.values && f.values.length > f.state) {
+        sort = f.values[f.state].value;
+      }
+    }
+    let baseUrl = query && query.trim().length > 0
+      ? `https://nhentai.net/search/?q=${encodeURIComponent(query.trim())}`
+      : `https://nhentai.net/`;
+    
+    let url = baseUrl;
+    if (url.includes("?")) {
+      url += `&page=${page}`;
+      if (sort) url += `&sort=${sort}`;
+    } else {
+      url += `?page=${page}`;
+      // Default nhentai homepage doesn't strictly take sort param like search does, 
+      // but if there's no query, search should be used if sort is provided.
+      if (sort) {
+        url = `https://nhentai.net/search/?q=""&page=${page}&sort=${sort}`;
+      }
+    }
 
     const res = await this.client.get(url, this.getHeaders());
     const doc = new Document(res.body);

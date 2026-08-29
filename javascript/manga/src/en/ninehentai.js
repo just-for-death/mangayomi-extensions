@@ -90,13 +90,36 @@ class DefaultExtension extends MProvider {
     }
   }
 
+
+  getFilterList() {
+    return [
+      {
+        type_name: "SelectFilter",
+        name: "Sort By",
+        state: 0,
+        values: [
+          { type_name: "SelectOption", name: "Recent", value: "1" },
+          { type_name: "SelectOption", name: "Popular", value: "2" },
+          { type_name: "SelectOption", name: "Downloads", value: "3" }
+        ]
+      }
+    ];
+  }
+
   async search(query, page, filters) {
+    let sortVal = 1;
+    if (filters && filters.length > 0) {
+      const f = filters[0];
+      if (f.type_name === "SelectFilter" && f.values && f.values.length > f.state) {
+        sortVal = parseInt(f.values[f.state].value) || 1;
+      }
+    }
     const url = "https://9hentai.so/api/getBook";
     const body = {
       search: {
         text: query || "",
         page: page - 1,
-        sort: 1,
+        sort: sortVal,
         pages: { range: [0, 2000] },
         tag: { text: "", type: 1, tags: [], items: { included: [], excluded: [] } }
       }

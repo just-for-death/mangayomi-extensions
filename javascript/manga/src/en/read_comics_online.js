@@ -117,7 +117,17 @@ class DefaultExtension extends MProvider {
     };
   }
 
-  async search(query, page, filters) {
+
+    getFilterList() {
+        return [
+            {
+                type_name: "HeaderFilter",
+                name: "No filters available for this source"
+            }
+        ];
+    }
+
+    async search(query, page, filters) {
     if (query && query.trim().length > 0) {
       const url = `https://readcomicsonline.ru/search?query=${encodeURIComponent(query.trim())}`;
       const res = await this.client.get(url, this.getHeaders());
