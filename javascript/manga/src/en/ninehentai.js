@@ -55,7 +55,7 @@ class DefaultExtension extends MProvider {
         list: list,
         hasNextPage: results.length >= 18
       };
-    } catch (_) {
+    } catch (e) { 
       return { list: [], hasNextPage: false };
     }
   }
@@ -85,7 +85,7 @@ class DefaultExtension extends MProvider {
         list: list,
         hasNextPage: results.length >= 18
       };
-    } catch (_) {
+    } catch (e) { 
       return { list: [], hasNextPage: false };
     }
   }
@@ -138,13 +138,14 @@ class DefaultExtension extends MProvider {
         list: list,
         hasNextPage: results.length >= 18
       };
-    } catch (_) {
+    } catch (e) { 
       return { list: [], hasNextPage: false };
     }
   }
 
   async getDetail(url) {
-    const id = url.replace(/[^0-9]/g, "");
+    const idMatch = url.match(/\/g\/(\d+)/);
+    const id = idMatch ? idMatch[1] : url.replace(/[^0-9]/g, "");
     const apiUrl = "https://9hentai.so/api/getBookByID";
     try {
       const res = await this.client.post(apiUrl, this.getHeaders(), { id: parseInt(id) });
@@ -168,7 +169,7 @@ class DefaultExtension extends MProvider {
           }
         ]
       };
-    } catch (_) {
+    } catch (e) { 
       return {
         name: "NineHentai Doujin",
         imageUrl: "",
@@ -182,25 +183,28 @@ class DefaultExtension extends MProvider {
   }
 
   async getPageList(url) {
-    const id = url.replace(/[^0-9]/g, "");
+    const idMatch = url.match(/\/g\/(\d+)/);
+    const id = idMatch ? idMatch[1] : url.replace(/[^0-9]/g, "");
     const apiUrl = "https://9hentai.so/api/getBookByID";
     try {
       const res = await this.client.post(apiUrl, this.getHeaders(), { id: parseInt(id) });
       const data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
       const b = data.results || data;
-      const server = b.image_server || "https://i.9hentai.so/images/";
+      // API returns image_server as "https://i.9hentai.com/images/" but correct CDN is .so
+      const rawServer = b.image_server || "https://i.9hentai.so/images/";
+      const server = rawServer.replace("i.9hentai.com", "i.9hentai.so");
       const total = b.total_page || 1;
       const pages = [];
 
       for (let i = 1; i <= total; i++) {
         pages.push({
-          url: `${server}${b.id}/${i}.jpg`,
+          url: `${server}${b.id}/${i}.${(b.pages && b.pages[i-1] && b.pages[i-1].t === "p") ? "png" : "jpg"}`,
           headers: { "Referer": "https://9hentai.so/" }
         });
       }
 
       return pages;
-    } catch (_) {
+    } catch (e) { 
       return [];
     }
   }

@@ -58,7 +58,7 @@ class DefaultExtension extends MProvider {
             }
         }
         var tags = "";
-        if (filters && filters[5] && filters[5].state) {
+        if (filters && filters.length > 5 && filters[5].state) {
             for (var filter of filters[5].state) {
                 if (filter.state == true) tags += `&included_tag=${filter.value}`;
             }
@@ -80,8 +80,8 @@ class DefaultExtension extends MProvider {
             }
         }
 
-        var btn = doc.selectFirst("button");
-        var hasNextPage = btn ? btn.text.length > 0 : false;
+        var nextBtn = doc.selectFirst("a[href*='page=']:contains('Next'), button:contains('Next'), a[rel='next']");
+        var hasNextPage = !!nextBtn;
         return { list, hasNextPage };
     }
 
@@ -103,6 +103,8 @@ class DefaultExtension extends MProvider {
 
         var doc = await this.request(slug);
         var imageUrl = this.getImageUrl(link);
+        var titleEl = doc.selectFirst("h1, .link.text-2xl, section h1");
+        var seriesTitle = titleEl ? titleEl.text.trim() : "";
         var descEl = doc.selectFirst("p.whitespace-pre-wrap.break-words");
         var description = descEl ? descEl.text.trim() : "";
 
@@ -161,7 +163,7 @@ class DefaultExtension extends MProvider {
             }
             var aEl = chap.selectFirst("a");
             var inputEl = chap.selectFirst("input");
-            // Use attr("href") — more reliable than .getHref in QuickJS DOM
+            
             var chapUrl = "";
             if (aEl) {
                 chapUrl = aEl.attr("href") || aEl.getHref || "";
@@ -178,11 +180,14 @@ class DefaultExtension extends MProvider {
             if (chapUrl && !chapUrl.startsWith("http")) {
                 chapUrl = `${this.source.baseUrl}${chapUrl.startsWith("/") ? "" : "/"}${chapUrl}`;
             }
+            var name = innerSpan ? innerSpan.text.trim() : (spanEl ? spanEl.text.trim() : "");
+            if (!name && aEl) name = aEl.text.trim();
+            if (!name) name = "Chapter";
             if (chapUrl) {
                 chapters.push({ name, url: chapUrl, dateUpload });
             }
         }
-        return { name: "", title: "", description, imageUrl, author, genre, status, chapters };
+        return { name: seriesTitle, title: "", description, imageUrl, author, genre, status, chapters };
     }
 
     async getPageList(url) {
@@ -196,7 +201,7 @@ class DefaultExtension extends MProvider {
         var doc = await this.request(slug);
 
         var urls = [];
-        // Try all common image selectors — confirmed working via FlareSolverr tests
+        
         var images = doc.select("section[id*='chapter'] img, #chapter-images img, section#chapter-images img, img[src*='lastation'], img[src*='scans'], img[src*='compsci88'], img[src*='lowee'], img[src*='weebcentral'], img[src*='/manga/']");
         // If no specific selector found, fall back to all imgs in body
         if (images.length === 0) {
