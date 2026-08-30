@@ -1,6 +1,6 @@
 const mangayomiSources = [
   {
-    "name": "ReadComicOnline",
+    "name": "Read Comics Online",
     "lang": "en",
     "id": 376287717,
     "baseUrl": "https://readcomicsonline.ru",
@@ -10,7 +10,7 @@ const mangayomiSources = [
     "typeSource": "single",
     "isManga": true,
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "pkgPath": "javascript/manga/src/en/read_comics_online.js",
   },
 ];
