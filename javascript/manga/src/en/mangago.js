@@ -162,17 +162,22 @@ class DefaultExtension extends MProvider {
         const fullUrl = this._absUrl(url);
         const res = await this.client.get(fullUrl, this.getHeaders());
         const html = res.body || "";
-        const doc = new Document(html);
         const pages = [];
         const seen = new Set();
-
-        const extractImgs = (d) => {
-            const allImgs = d.querySelectorAll("img");
+        
+        let totalPages = 1;
+        const totalMatch = html.match(/total_pages\s*=\s*(\d+)/);
+        if (totalMatch) {
+            totalPages = parseInt(totalMatch[1], 10);
+        }
+        
+        const extractFromHtml = (h) => {
+            const doc = new Document(h);
+            const allImgs = doc.querySelectorAll("img");
             for (const img of allImgs) {
                 const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
                 if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !src.includes("loader") && !seen.has(src)) {
                     if (src.includes("mangapicgallery.com") || src.includes("/r/newpiclink/") || src.includes("/r/piclink/")) {
-                        // Use HTTP to avoid Dart SSL rejection of underscored subdomains (iweb_N.mangapicgallery.com)
                         const httpSrc = src.replace(/^https:\/\/iweb_/, "http://iweb_");
                         seen.add(httpSrc);
                         pages.push({ url: httpSrc, headers: { "Referer": "https://www.mangago.me/" } });
@@ -180,20 +185,22 @@ class DefaultExtension extends MProvider {
                 }
             }
         };
-
-        extractImgs(doc);
-
-        if (pages.length === 0) {
-            const imgs = doc.querySelectorAll("#pic_container img, #page_list img, .page-image img, img[id^='page'], img#comic_page");
-            for (const img of imgs) {
-                const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
-                if (src && src.startsWith("http") && !seen.has(src)) {
-                    seen.add(src);
-                    pages.push({ url: src, headers: { "Referer": "https://www.mangago.me/" } });
-                }
+        
+        extractFromHtml(html);
+        
+        if (totalPages > 1) {
+            let baseUrl = fullUrl.split('?')[0];
+            if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+            if (baseUrl.includes('/pg-')) {
+                baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/pg-'));
+            }
+            for (let i = 2; i <= totalPages; i++) {
+                const pageUrl = `${baseUrl}/pg-${i}/`;
+                const pageRes = await this.client.get(pageUrl, this.getHeaders());
+                extractFromHtml(pageRes.body || "");
             }
         }
-
+        
         return pages;
     }
 }
