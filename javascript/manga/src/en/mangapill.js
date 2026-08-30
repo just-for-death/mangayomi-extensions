@@ -9,7 +9,7 @@ const mangayomiSources = [
       "https://www.google.com/s2/favicons?sz=64&domain=https://mangapill.com/",
     "typeSource": "single",
     "isManga": true,
-    "version": "1.2.0",
+    "version": "1.3.1",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/mangapill.js",
@@ -40,52 +40,79 @@ class DefaultExtension extends MProvider {
     return parseInt(preferences.get(key));
   }
 
-    async getMangaList(slug) {
+      async getMangaList(slug) {
     var cleanSlug = slug || "mangas";
     var url = cleanSlug.startsWith('http') ? cleanSlug : `${this.source.baseUrl}/${cleanSlug.replace(/^\//, '')}`;
     var res = await new Client().get(url, this.getHeaders());
     var doc = new Document(res.body);
     var list = [];
     var seen = new Set();
-    
-    // We select all links to manga
-    var anchors = doc.select("a[href*='/manga/']");
-    var mangaMap = {};
-    
-    for (var a of anchors) {
-      var link = a.getHref || a.attr("href") || "";
-      if (!link || !link.includes("/manga/")) continue;
-      if (link.includes("/chapters/")) continue;
-      
-      if (!mangaMap[link]) mangaMap[link] = { link: link, name: "", imageUrl: "" };
-      
-      var img = a.selectFirst("img");
-      if (img) {
-          var src = img.getSrc || img.attr("data-src") || img.attr("src") || "";
-          if (src) mangaMap[link].imageUrl = src.startsWith("//") ? `https:${src}` : src;
+
+    // 1. Try structured card container parsing (covers Homepage /?page=1, /mangas/new, /search)
+    var cards = doc.select("div[class*='grid'] > div, div.grid > div");
+    for (var card of cards) {
+      var mangaA = card.selectFirst("a[href*='/manga/']");
+      var img = card.selectFirst("img");
+      if (mangaA) {
+        var link = mangaA.getHref || mangaA.attr("href") || "";
+        if (!link || seen.has(link) || link.includes("/chapters/")) continue;
+
+        var name = mangaA.text ? mangaA.text.trim() : "";
+        if (!name && img) {
           var alt = img.attr("alt") || "";
-          if (alt && !mangaMap[link].name) {
-              mangaMap[link].name = alt.includes("  ") ? alt.split("  ")[0].trim() : alt.trim();
-          }
-      }
-      
-      var nameEl = a.selectFirst(".line-clamp-2, div.font-black, div.font-bold, a.mb-2, .text-sm");
-      if (nameEl && nameEl.text && nameEl.text.trim()) {
-          mangaMap[link].name = nameEl.text.trim();
-      }
-    }
-    
-    for (var key in mangaMap) {
-        var m = mangaMap[key];
-        if (m.name && m.link) {
-            m.link = m.link.startsWith("http") ? m.link : `${this.source.baseUrl}${m.link.startsWith('/') ? m.link : '/' + m.link}`;
-            list.push(m);
+          name = alt.includes("  ") ? alt.split("  ")[0].trim() : alt.trim();
         }
+
+        var imageUrl = "";
+        if (img) {
+          var src = img.getSrc || img.attr("data-src") || img.attr("src") || "";
+          if (src) imageUrl = src.startsWith("//") ? `https:${src}` : src;
+        }
+
+        if (name && link) {
+          seen.add(link);
+          list.push({
+            name: name,
+            imageUrl: imageUrl,
+            link: link.startsWith("http") ? link : `${this.source.baseUrl}${link.startsWith('/') ? link : '/' + link}`
+          });
+        }
+      }
     }
-    
+
+    // 2. Fallback to anchor iteration if no cards found
+    if (list.length === 0) {
+      var anchors = doc.select("a[href*='/manga/']");
+      for (var a of anchors) {
+        var link = a.getHref || a.attr("href") || "";
+        if (!link || seen.has(link) || link.includes("/chapters/")) continue;
+
+        var img = a.selectFirst("img");
+        var imageUrl = "";
+        var name = a.text ? a.text.trim() : "";
+
+        if (img) {
+          var src = img.getSrc || img.attr("data-src") || img.attr("src") || "";
+          if (src) imageUrl = src.startsWith("//") ? `https:${src}` : src;
+          var alt = img.attr("alt") || "";
+          if (alt && !name) {
+            name = alt.includes("  ") ? alt.split("  ")[0].trim() : alt.trim();
+          }
+        }
+
+        if (name && link) {
+          seen.add(link);
+          list.push({
+            name: name,
+            imageUrl: imageUrl,
+            link: link.startsWith("http") ? link : `${this.source.baseUrl}${link.startsWith('/') ? link : '/' + link}`
+          });
+        }
+      }
+    }
+
     return { list, hasNextPage: list.length >= 10 };
   }
-
 
   async getPopular(page) {
     // mangapill.com homepage shows popular/trending manga

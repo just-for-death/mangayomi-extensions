@@ -44,7 +44,7 @@
     "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://mangapill.com/",
     "typeSource": "single",
     "isManga": true,
-    "version": "1.3.0",
+    "version": "1.3.1",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/mangapill.js"
@@ -92,7 +92,7 @@
     "pkgPath": "javascript/manga/src/en/ninehentai.js"
   },
   {
-    "name": "ReadComicOnline",
+    "name": "Read Comics Online",
     "lang": "en",
     "id": 376287717,
     "baseUrl": "https://readcomicsonline.ru",
@@ -101,7 +101,7 @@
     "typeSource": "single",
     "isManga": true,
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "pkgPath": "javascript/manga/src/en/read_comics_online.js"
   },
   {
