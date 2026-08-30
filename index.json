@@ -20,7 +20,7 @@
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.1",
+    "version": "1.3.0",
     "pkgPath": "javascript/manga/src/en/mangago.js"
   },
   {
@@ -32,7 +32,7 @@
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangahere.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "pkgPath": "javascript/manga/src/en/mangahere.js"
   },
   {
@@ -44,7 +44,7 @@
     "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://mangapill.com/",
     "typeSource": "single",
     "isManga": true,
-    "version": "1.2.1",
+    "version": "1.3.0",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/mangapill.js"
