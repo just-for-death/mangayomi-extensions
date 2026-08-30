@@ -132,7 +132,12 @@ class DefaultExtension extends MProvider {
   }
 
   async getDetail(url) {
-    let res = await new Client().get(url);
+    let cleanUrl = (url || "").replace(/&amp;/g, "&").trim();
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      const base = this.getBaseUrl() || "https://www.webtoons.com";
+      cleanUrl = `${base.endsWith("/") ? base.slice(0, -1) : base}${cleanUrl.startsWith("/") ? "" : "/"}${cleanUrl}`;
+    }
+    let res = await new Client().get(cleanUrl, this.getHeaders(cleanUrl));
     let doc = new Document(res.body);
 
     const nameEl = doc.selectFirst("h1.subj, h3.subj, .subj_info h1, .detail_header .subj, .info h1, .subj");
@@ -398,16 +403,20 @@ class DefaultExtension extends MProvider {
   }
 
   async getPageList(url) {
-    const cleanUrl = url.replace(/&amp;/g, "&");
+    let cleanUrl = url.replace(/&amp;/g, "&").trim();
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      const base = this.getBaseUrl() || "https://www.webtoons.com";
+      cleanUrl = `${base.endsWith("/") ? base.slice(0, -1) : base}${cleanUrl.startsWith("/") ? "" : "/"}${cleanUrl}`;
+    }
     const res = await new Client().get(cleanUrl, this.getHeaders(cleanUrl));
     const doc = new Document(res.body);
     const urls = [];
     const seen = new Set();
-    const images = (typeof doc.select === "function" ? doc.select("div#_imageList img, div.viewer_img img, .viewer_lst img") : null) ||
-                   (typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("div#_imageList img, div.viewer_img img, .viewer_lst img") : []);
+    const images = (typeof doc.select === "function" ? doc.select("div#_imageList img, div.viewer_img img, .viewer_lst img, div.viewer img, div.viewer_img_lst img, img[data-url], img[data-src], img[id*=image], ._images img") : null) ||
+                   (typeof doc.querySelectorAll === "function" ? doc.querySelectorAll("div#_imageList img, div.viewer_img img, .viewer_lst img, div.viewer img, div.viewer_img_lst img, img[data-url], img[data-src], img[id*=image], ._images img") : []);
     for (let i = 0; i < images.length; i++) {
       const img = images[i];
-      const src = (typeof img.attr === "function" ? (img.attr("data-url") || img.attr("src")) : (img.getSrc || img.getAttribute?.("data-url") || img.getAttribute?.("src"))) || "";
+      const src = (typeof img.attr === "function" ? (img.attr("data-url") || img.attr("data-src") || img.attr("src")) : (img.getSrc || img.getAttribute?.("data-url") || img.getAttribute?.("data-src") || img.getAttribute?.("src"))) || "";
       if (src && !src.includes("sp_error") && !src.includes("banner") && !src.includes("logo") && !seen.has(src)) {
         seen.add(src);
         urls.push({
