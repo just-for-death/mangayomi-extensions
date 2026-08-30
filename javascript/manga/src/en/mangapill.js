@@ -40,55 +40,52 @@ class DefaultExtension extends MProvider {
     return parseInt(preferences.get(key));
   }
 
-  async getMangaList(slug) {
+    async getMangaList(slug) {
     var cleanSlug = slug || "mangas";
     var url = cleanSlug.startsWith('http') ? cleanSlug : `${this.source.baseUrl}/${cleanSlug.replace(/^\//, '')}`;
     var res = await new Client().get(url, this.getHeaders());
     var doc = new Document(res.body);
     var list = [];
     var seen = new Set();
-    // Direct approach: select all anchor elements pointing to manga pages.
-    // NOTE: mangapill.com renders the SAME manga href more than once per
-    // card (e.g. an empty/decorative image-wrapper anchor and a separate
-    // title anchor, or a duplicate reference elsewhere on the page). Do NOT
-    // mark an href as "seen" until a *valid* entry (with a name) has been
-    // built from it — otherwise the first, content-less occurrence
-    // permanently blocks a later, valid occurrence of the same href and
-    // silently drops that manga from the results (this previously made
-    // search() return 0 results even though the page had real matches).
+    
+    // We select all links to manga
     var anchors = doc.select("a[href*='/manga/']");
+    var mangaMap = {};
+    
     for (var a of anchors) {
       var link = a.getHref || a.attr("href") || "";
-      if (!link || !link.includes("/manga/") || seen.has(link)) continue;
-      // Skip chapter links and non-manga links
+      if (!link || !link.includes("/manga/")) continue;
       if (link.includes("/chapters/")) continue;
+      
+      if (!mangaMap[link]) mangaMap[link] = { link: link, name: "", imageUrl: "" };
+      
       var img = a.selectFirst("img");
-      if (!img) continue;
-      var imageUrl = img.getSrc || img.attr("data-src") || img.attr("src") || "";
-      var nameEl = a.selectFirst(".line-clamp-2, div.font-black, div.font-bold, a.mb-2");
-      var name = (nameEl ? nameEl.text : (img.attr("alt") || "")).trim();
-      // Remove duplicate name (mangapill sometimes puts name twice in alt)
-      if (name.includes("  ")) name = name.split("  ")[0].trim();
-      if (name && link) {
-        seen.add(link);
-        list.push({
-          name,
-          imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
-          link: link.startsWith("http") ? link : `${this.source.baseUrl}${link.startsWith('/') ? link : '/' + link}`
-        });
+      if (img) {
+          var src = img.getSrc || img.attr("data-src") || img.attr("src") || "";
+          if (src) mangaMap[link].imageUrl = src.startsWith("//") ? `https:${src}` : src;
+          var alt = img.attr("alt") || "";
+          if (alt && !mangaMap[link].name) {
+              mangaMap[link].name = alt.includes("  ") ? alt.split("  ")[0].trim() : alt.trim();
+          }
+      }
+      
+      var nameEl = a.selectFirst(".line-clamp-2, div.font-black, div.font-bold, a.mb-2, .text-sm");
+      if (nameEl && nameEl.text && nameEl.text.trim()) {
+          mangaMap[link].name = nameEl.text.trim();
       }
     }
+    
+    for (var key in mangaMap) {
+        var m = mangaMap[key];
+        if (m.name && m.link) {
+            m.link = m.link.startsWith("http") ? m.link : `${this.source.baseUrl}${m.link.startsWith('/') ? m.link : '/' + m.link}`;
+            list.push(m);
+        }
+    }
+    
     return { list, hasNextPage: list.length >= 10 };
   }
 
-  async getNavPage(prefKey) {
-    var val = await this.getPreference(prefKey);
-    var slug = "mangas/new";
-    if (val == 2) {
-      slug = "chapters";
-    }
-    return await this.getMangaList(slug);
-  }
 
   async getPopular(page) {
     // mangapill.com homepage shows popular/trending manga
