@@ -1,4 +1,5 @@
 const mangayomiSources = [{
+    "id": 395810482,
     "name": "MangaHere",
     "lang": "en",
     "baseUrl": "https://fanfox.net",
@@ -91,24 +92,81 @@ class DefaultExtension extends MProvider {
     getFilterList() {
         return [
             {
-                type_name: "HeaderFilter",
-                name: "No filters available for this source"
-            }
-        ];
-    }
-
-  
-    getFilterList() {
-        return [
+                type_name: "GroupFilter",
+                name: "Genres",
+                state: [
+                    { type_name: "CheckBox", name: "Action", value: "1", state: false },
+                    { type_name: "CheckBox", name: "Adventure", value: "2", state: false },
+                    { type_name: "CheckBox", name: "Comedy", value: "3", state: false },
+                    { type_name: "CheckBox", name: "Drama", value: "4", state: false },
+                    { type_name: "CheckBox", name: "Fantasy", value: "5", state: false },
+                    { type_name: "CheckBox", name: "Martial Arts", value: "6", state: false },
+                    { type_name: "CheckBox", name: "Shounen", value: "7", state: false },
+                    { type_name: "CheckBox", name: "Horror", value: "8", state: false },
+                    { type_name: "CheckBox", name: "Supernatural", value: "9", state: false },
+                    { type_name: "CheckBox", name: "Harem", value: "10", state: false },
+                    { type_name: "CheckBox", name: "Psychological", value: "11", state: false },
+                    { type_name: "CheckBox", name: "Romance", value: "12", state: false },
+                    { type_name: "CheckBox", name: "School Life", value: "13", state: false },
+                    { type_name: "CheckBox", name: "Shoujo", value: "14", state: false },
+                    { type_name: "CheckBox", name: "Mystery", value: "15", state: false },
+                    { type_name: "CheckBox", name: "Sci-fi", value: "16", state: false },
+                    { type_name: "CheckBox", name: "Seinen", value: "17", state: false },
+                    { type_name: "CheckBox", name: "Tragedy", value: "18", state: false },
+                    { type_name: "CheckBox", name: "Ecchi", value: "19", state: false },
+                    { type_name: "CheckBox", name: "Sports", value: "20", state: false },
+                    { type_name: "CheckBox", name: "Slice of Life", value: "21", state: false },
+                    { type_name: "CheckBox", name: "Mature", value: "22", state: false },
+                    { type_name: "CheckBox", name: "Shoujo Ai", value: "23", state: false },
+                    { type_name: "CheckBox", name: "Webtoons", value: "24", state: false },
+                    { type_name: "CheckBox", name: "Doujinshi", value: "25", state: false },
+                    { type_name: "CheckBox", name: "One Shot", value: "26", state: false },
+                    { type_name: "CheckBox", name: "Smut", value: "27", state: false },
+                    { type_name: "CheckBox", name: "Yaoi", value: "28", state: false },
+                    { type_name: "CheckBox", name: "Josei", value: "29", state: false },
+                    { type_name: "CheckBox", name: "Historical", value: "30", state: false },
+                    { type_name: "CheckBox", name: "Shounen Ai", value: "31", state: false },
+                    { type_name: "CheckBox", name: "Gender Bender", value: "32", state: false },
+                    { type_name: "CheckBox", name: "Adult", value: "33", state: false },
+                    { type_name: "CheckBox", name: "Yuri", value: "34", state: false },
+                    { type_name: "CheckBox", name: "Mecha", value: "35", state: false },
+                    { type_name: "CheckBox", name: "Lolicon", value: "36", state: false },
+                    { type_name: "CheckBox", name: "Shotacon", value: "37", state: false }
+                ]
+            },
             {
-                type_name: "HeaderFilter",
-                name: "No filters available for this source"
+                type_name: "SelectFilter",
+                name: "Completed Series",
+                state: 0,
+                values: [
+                    { type_name: "SelectOption", name: "Either", value: "0" },
+                    { type_name: "SelectOption", name: "Yes", value: "2" },
+                    { type_name: "SelectOption", name: "No", value: "1" }
+                ]
             }
         ];
     }
 
     async search(query, page, filters) {
-        const url = `https://fanfox.net/search?title=${encodeURIComponent(query)}&page=${page}`;
+        let url = `https://fanfox.net/search?title=${encodeURIComponent(query)}&page=${page}`;
+        if (filters && filters.length > 0) {
+            for (const filter of filters) {
+                if (filter.type_name === "GroupFilter" && filter.name === "Genres") {
+                    const selectedGenres = [];
+                    for (const genre of filter.state) {
+                        if (genre.state) {
+                            selectedGenres.push(genre.value);
+                        }
+                    }
+                    if (selectedGenres.length > 0) {
+                        url += `&genres=${selectedGenres.join(',')}`;
+                    }
+                } else if (filter.type_name === "SelectFilter" && filter.name === "Completed Series") {
+                    url += `&st=${filter.values[filter.state].value}`;
+                }
+            }
+        }
+        
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
@@ -168,13 +226,15 @@ class DefaultExtension extends MProvider {
         }
 
         const chapters = [];
-        const rows = doc.querySelectorAll(".detail-main-list li a, .detail-main-list a, a[href*='/c']");
+        // Use broad href selector to bypass QuickJS issues with trailing-space class attrs in fanfox.net HTML
+        // Match direct chapter links: /manga/{slug}/v{vol}/c{ch}/{page}.html
+        const rows = doc.querySelectorAll("a[href*='/manga/'][href*='/c']");
         const seenLinks = new Set();
 
         for (const a of rows) {
-            const title3El = a.selectFirst ? a.selectFirst(".title-3, p.title-3") : a.querySelector(".title-3, p.title-3");
+            const title3El = a.selectFirst ? a.selectFirst(".title3, p.title3") : a.querySelector(".title3, p.title3");
             const title2El = a.selectFirst ? a.selectFirst(".title-2, p.title-2, span.title-2") : a.querySelector(".title-2, p.title-2, span.title-2");
-            var name = title3El ? title3El.text.trim() : (a.attr("title") || a.text.trim());
+            var name = (title3El ? title3El.text.trim() : null) || a.attr("title") || a.text.trim();
             var dateUpload = "";
             if (title2El) {
                 var dt = title2El.text.trim();
@@ -233,10 +293,13 @@ class DefaultExtension extends MProvider {
                 if (sIdx !== -1) {
                     const sEnd = html.indexOf("</script>", sIdx);
                     const packedScript = html.substring(sIdx, sEnd !== -1 ? sEnd : undefined);
-                    const unpacked = eval(packedScript.replace(/^eval\(/, "("));
-                    const kMatch = unpacked.match(/guidkey\s*=\s*([^;]+);/);
-                    if (kMatch) {
-                        guidkey = eval(kMatch[1]);
+                    const expr = packedScript.replace(/^eval\(/, "(");
+                    const unpacked = new Function("return " + expr)();
+                    if (unpacked) {
+                        const kMatch = unpacked.match(/guidkey\s*=\s*([^;]+);/);
+                        if (kMatch) {
+                            guidkey = new Function("return " + kMatch[1])();
+                        }
                     }
                 }
             } catch (_) {}
@@ -269,10 +332,19 @@ class DefaultExtension extends MProvider {
                         .trim();
 
                     if (rawBody && rawBody.includes("eval(")) {
-                        const unpackedFun = eval(rawBody.replace(/^eval\(/, "("));
-                        const d = new Function(unpackedFun + "; return (typeof d !== 'undefined' ? d : dm5imagefun());")();
-                        if (d && Array.isArray(d)) {
-                            for (let img of d) {
+                        const expr = rawBody.replace(/^eval\(/, "(");
+                        const unpackedFun = new Function("return " + expr)();
+                        if (!unpackedFun) continue;
+                        const pixMatch = unpackedFun.match(/pix\s*=\s*["']([^"']+)["']/);
+                        const pvalueMatch = unpackedFun.match(/pvalue\s*=\s*\[(.*?)\]/);
+                        if (pixMatch && pvalueMatch) {
+                            const pix = pixMatch[1];
+                            const paths = pvalueMatch[1].split(',').map(s => s.replace(/["']/g, '').trim());
+                            for (let path of paths) {
+                                let img = path;
+                                if (!img.startsWith('//') && !img.startsWith('http')) {
+                                    img = pix + img;
+                                }
                                 if (img && !seen.has(img)) {
                                     seen.add(img);
                                     const fullImg = img.startsWith("//") ? `https:${img}` : img;
@@ -280,6 +352,21 @@ class DefaultExtension extends MProvider {
                                         url: fullImg,
                                         headers: { "Referer": "https://fanfox.net/" }
                                     });
+                                }
+                            }
+                        } else {
+                            // Fallback to function approach if regex fails
+                            const d = new Function(unpackedFun + "; return (typeof d !== 'undefined' ? d : (typeof dm5imagefun !== 'undefined' ? dm5imagefun() : []));")();
+                            if (d && Array.isArray(d)) {
+                                for (let img of d) {
+                                    if (img && !seen.has(img)) {
+                                        seen.add(img);
+                                        const fullImg = img.startsWith("//") ? `https:${img}` : img;
+                                        pages.push({
+                                            url: fullImg,
+                                            headers: { "Referer": "https://fanfox.net/" }
+                                        });
+                                    }
                                 }
                             }
                         }

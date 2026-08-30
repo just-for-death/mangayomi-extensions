@@ -1,4 +1,5 @@
 const mangayomiSources = [{
+    "id": 142987519,
     "name": "MangaFreak",
     "lang": "en",
     "baseUrl": "https://ww3.mangafreak.me",
@@ -7,7 +8,7 @@ const mangayomiSources = [{
     "typeSource": "single",
     "itemType": 0,
     "version": "1.0.1",
-    "pkgPath": "manga/src/en/mangafreak.js"
+    "pkgPath": "javascript/manga/src/en/mangafreak.js"
 }];
 
 class DefaultExtension extends MProvider {
@@ -90,6 +91,65 @@ class DefaultExtension extends MProvider {
         return [
             {
                 type_name: "SelectFilter",
+                name: "Genre",
+                state: 0,
+                values: [
+                    { type_name: "SelectOption", name: "All", value: "All" },
+                    { type_name: "SelectOption", name: "Action", value: "Action" },
+                    { type_name: "SelectOption", name: "Adult", value: "Adult" },
+                    { type_name: "SelectOption", name: "Adventure", value: "Adventure" },
+                    { type_name: "SelectOption", name: "Animated", value: "Animated" },
+                    { type_name: "SelectOption", name: "Comedy", value: "Comedy" },
+                    { type_name: "SelectOption", name: "Demons", value: "Demons" },
+                    { type_name: "SelectOption", name: "Drama", value: "Drama" },
+                    { type_name: "SelectOption", name: "Ecchi", value: "Ecchi" },
+                    { type_name: "SelectOption", name: "Fantasy", value: "Fantasy" },
+                    { type_name: "SelectOption", name: "Full Color", value: "Full_Color" },
+                    { type_name: "SelectOption", name: "Gender Bender", value: "Gender_Bender" },
+                    { type_name: "SelectOption", name: "Harem", value: "Harem" },
+                    { type_name: "SelectOption", name: "Historical", value: "Historical" },
+                    { type_name: "SelectOption", name: "Horror", value: "Horror" },
+                    { type_name: "SelectOption", name: "Isekai", value: "Isekai" },
+                    { type_name: "SelectOption", name: "Josei", value: "Josei" },
+                    { type_name: "SelectOption", name: "Life", value: "Life" },
+                    { type_name: "SelectOption", name: "Lolicon", value: "Lolicon" },
+                    { type_name: "SelectOption", name: "Magic", value: "Magic" },
+                    { type_name: "SelectOption", name: "Manhwa", value: "Manhwa" },
+                    { type_name: "SelectOption", name: "Martial Arts", value: "Martial_Arts" },
+                    { type_name: "SelectOption", name: "Mature", value: "Mature" },
+                    { type_name: "SelectOption", name: "Mecha", value: "Mecha" },
+                    { type_name: "SelectOption", name: "Military", value: "Military" },
+                    { type_name: "SelectOption", name: "Mystery", value: "Mystery" },
+                    { type_name: "SelectOption", name: "One Shot", value: "One_Shot" },
+                    { type_name: "SelectOption", name: "Psychological", value: "Psychological" },
+                    { type_name: "SelectOption", name: "Reincarnation", value: "Reincarnation" },
+                    { type_name: "SelectOption", name: "Romance", value: "Romance" },
+                    { type_name: "SelectOption", name: "School", value: "School" },
+                    { type_name: "SelectOption", name: "School Life", value: "School_Life" },
+                    { type_name: "SelectOption", name: "Sci-Fi", value: "Sci_Fi" },
+                    { type_name: "SelectOption", name: "Seinen", value: "Seinen" },
+                    { type_name: "SelectOption", name: "Shotacon", value: "Shotacon" },
+                    { type_name: "SelectOption", name: "Shoujo", value: "Shoujo" },
+                    { type_name: "SelectOption", name: "Shoujo Ai", value: "Shoujo_Ai" },
+                    { type_name: "SelectOption", name: "Shounen", value: "Shounen" },
+                    { type_name: "SelectOption", name: "Shounen Ai", value: "Shounen_Ai" },
+                    { type_name: "SelectOption", name: "Slice Of Life", value: "Slice_Of_Life" },
+                    { type_name: "SelectOption", name: "Smut", value: "Smut" },
+                    { type_name: "SelectOption", name: "Sports", value: "Sports" },
+                    { type_name: "SelectOption", name: "Superhero", value: "Superhero" },
+                    { type_name: "SelectOption", name: "Supernatural", value: "Supernatural" },
+                    { type_name: "SelectOption", name: "Super Power", value: "Super_Power" },
+                    { type_name: "SelectOption", name: "Tragedy", value: "Tragedy" },
+                    { type_name: "SelectOption", name: "Vampire", value: "Vampire" },
+                    { type_name: "SelectOption", name: "Villainess", value: "Villainess" },
+                    { type_name: "SelectOption", name: "Web Comic", value: "Web_Comic" },
+                    { type_name: "SelectOption", name: "Webtoon", value: "Webtoon" },
+                    { type_name: "SelectOption", name: "Yaoi", value: "Yaoi" },
+                    { type_name: "SelectOption", name: "Yuri", value: "Yuri" }
+                ]
+            },
+            {
+                type_name: "SelectFilter",
                 name: "Status",
                 state: 0,
                 values: [
@@ -129,10 +189,12 @@ class DefaultExtension extends MProvider {
             let statusParam = '';
             let sortParam = '';
             let typeParam = '';
+            let genre = 'All';
             if (filters && Array.isArray(filters)) {
                 for (const f of filters) {
                     if (f.type_name === 'SelectFilter' && f.values && f.values.length > f.state) {
                         const val = f.values[f.state].value;
+                        if (f.name === 'Genre' && val !== 'All') genre = val;
                         if (f.name === 'Status' && val !== 'All') statusParam = val;
                         if (f.name === 'SortBy' && val !== 'Popularity') sortParam = val;
                         if (f.name === 'Type' && val !== 'All') typeParam = val;
@@ -142,8 +204,14 @@ class DefaultExtension extends MProvider {
             let qs = '';
             if (statusParam) qs += `Status=${encodeURIComponent(statusParam)}&`;
             if (sortParam) qs += `SortBy=${encodeURIComponent(sortParam)}&`;
-            if (typeParam) qs += `Type=${encodeURIComponent(typeParam)}`;
-            const url = `${this.source.baseUrl}/Genre/All/${page}?${qs}`;
+            if (typeParam) qs += `Type=${encodeURIComponent(typeParam)}&`;
+            
+            if (qs.endsWith('&')) {
+                qs = qs.slice(0, -1);
+            }
+            let url = `${this.source.baseUrl}/Genre/${genre}/${page}`;
+            if (qs !== '') url += `?${qs}`;
+            
             const res = await this.client.get(url, this.getHeaders());
             const doc = new Document(res.body);
             const list = [];
@@ -176,14 +244,16 @@ class DefaultExtension extends MProvider {
         const items = doc.querySelectorAll(".manga_search_item, .manga_series_item, .ranking_item");
 
         for (const item of items) {
-            const a = item.querySelector(".ranking_item_info a") || item.querySelector("a");
+            // The first <a> in each .manga_search_item wraps only the thumbnail <img>
+            // (no text/title), so prefer the title link inside <h3> when present.
+            const titleA = item.querySelector("h3 a") || item.querySelector(".ranking_item_info a") || item.querySelector("a");
             const img = item.querySelector("img");
-            if (a) {
-                const strong = a.querySelector("strong");
-                const title = (strong ? strong.text : null) || a.attr("title") || (img ? img.attr("alt") : "") || a.text;
-                const link = a.attr("href");
+            if (titleA) {
+                const strong = titleA.querySelector("strong");
+                const title = (strong ? strong.text : null) || titleA.attr("title") || titleA.text || (img ? img.attr("alt") : "");
+                const link = titleA.attr("href");
                 const imageUrl = img ? (img.attr("src") || img.attr("data-src")) : "";
-                if (title && link) {
+                if (title && title.trim() && link) {
                     list.push({
                         name: title.trim(),
                         imageUrl: imageUrl,
@@ -241,7 +311,15 @@ class DefaultExtension extends MProvider {
         const imgTags = doc.querySelectorAll(".mySlides img");
         for (const img of imgTags) {
             const src = img.attr("src") || img.attr("data-src");
-            if (src) pages.push({ url: src, headers: this.getHeaders() });
+            if (src) {
+                pages.push({
+                    url: src,
+                    headers: {
+                        "Referer": "https://ww3.mangafreak.me/",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+                    }
+                });
+            }
         }
         return pages;
     }

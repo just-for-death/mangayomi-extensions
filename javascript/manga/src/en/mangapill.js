@@ -12,7 +12,7 @@ const mangayomiSources = [
     "version": "1.2.0",
     "dateFormat": "",
     "dateFormatLocale": "",
-    "pkgPath": "manga/src/en/mangapill.js",
+    "pkgPath": "javascript/manga/src/en/mangapill.js",
   },
 ];
 
@@ -46,22 +46,36 @@ class DefaultExtension extends MProvider {
     var res = await new Client().get(url, this.getHeaders());
     var doc = new Document(res.body);
     var list = [];
-    var mangaElements = doc.select("div[class*='grid'] > div, div.grid > div");
-    for (var manga of mangaElements) {
-      var a = manga.selectFirst("a[href*='/manga/']");
-      var img = manga.selectFirst("img");
-      if (a && img) {
-        var link = a.getHref || a.attr("href") || "";
-        var imageUrl = img.getSrc || img.attr("data-src") || img.attr("src") || "";
-        var nameDiv = manga.selectFirst("div.font-black, div.font-bold, .line-clamp-2, a.mb-2");
-        var name = (nameDiv ? nameDiv.text : a.text).trim();
-        if (name && link && !list.some(x => x.link === link)) {
-          list.push({
-            name,
-            imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
-            link: link.startsWith("http") ? link : `${this.source.baseUrl}${link.startsWith('/') ? link : '/' + link}`
-          });
-        }
+    var seen = new Set();
+    // Direct approach: select all anchor elements pointing to manga pages.
+    // NOTE: mangapill.com renders the SAME manga href more than once per
+    // card (e.g. an empty/decorative image-wrapper anchor and a separate
+    // title anchor, or a duplicate reference elsewhere on the page). Do NOT
+    // mark an href as "seen" until a *valid* entry (with a name) has been
+    // built from it — otherwise the first, content-less occurrence
+    // permanently blocks a later, valid occurrence of the same href and
+    // silently drops that manga from the results (this previously made
+    // search() return 0 results even though the page had real matches).
+    var anchors = doc.select("a[href*='/manga/']");
+    for (var a of anchors) {
+      var link = a.getHref || a.attr("href") || "";
+      if (!link || !link.includes("/manga/") || seen.has(link)) continue;
+      // Skip chapter links and non-manga links
+      if (link.includes("/chapters/")) continue;
+      var img = a.selectFirst("img");
+      if (!img) continue;
+      var imageUrl = img.getSrc || img.attr("data-src") || img.attr("src") || "";
+      var nameEl = a.selectFirst(".line-clamp-2, div.font-black, div.font-bold, a.mb-2");
+      var name = (nameEl ? nameEl.text : (img.attr("alt") || "")).trim();
+      // Remove duplicate name (mangapill sometimes puts name twice in alt)
+      if (name.includes("  ")) name = name.split("  ")[0].trim();
+      if (name && link) {
+        seen.add(link);
+        list.push({
+          name,
+          imageUrl: imageUrl.startsWith("//") ? `https:${imageUrl}` : imageUrl,
+          link: link.startsWith("http") ? link : `${this.source.baseUrl}${link.startsWith('/') ? link : '/' + link}`
+        });
       }
     }
     return { list, hasNextPage: list.length >= 10 };
@@ -77,29 +91,44 @@ class DefaultExtension extends MProvider {
   }
 
   async getPopular(page) {
-    return await this.getNavPage("pref_popular_content");
+    // mangapill.com homepage shows popular/trending manga
+    return await this.getMangaList(`?page=${page}`);
   }
   get supportsLatest() {
     throw new Error("supportsLatest not implemented");
   }
 
   async getLatestUpdates(page) {
-    return await this.getNavPage("pref_latest_content");
+    return await this.getMangaList(`mangas/new?page=${page}`);
   }
 
   async searchManga(query, status, type, genre, page) {
-    var slug = `search?q=${query}&status=${status}&type=${type}${genre}&page=${page}`;
+    var slug = `search?q=${encodeURIComponent(query)}&status=${status}&type=${type}${genre}&page=${page}`;
     return await this.getMangaList(slug);
   }
 
   async search(query, page, filters) {
-    var type = (filters && filters[0]?.values && filters[0]?.state != null) ? filters[0].values[filters[0].state]?.value ?? "" : "";
-    var status = (filters && filters[1]?.values && filters[1]?.state != null) ? filters[1].values[filters[1].state]?.value ?? "" : "";
-
+    var type = "";
+    var status = "";
     var genre = "";
-    if (filters && filters[2] && Array.isArray(filters[2].state)) {
-      for (var filter of filters[2].state) {
-        if (filter && filter.state == true) genre += `&genre=${filter.value}`;
+
+    if (filters && filters.length > 0) {
+      for (var filter of filters) {
+        if (filter.type_name === "SelectFilter") {
+          if (filter.name === "Type" && filter.state != null) {
+            type = filter.values[filter.state]?.value ?? "";
+          } else if (filter.name === "Status" && filter.state != null) {
+            status = filter.values[filter.state]?.value ?? "";
+          }
+        } else if (filter.type_name === "GroupFilter" && filter.name === "Genre") {
+          if (Array.isArray(filter.state)) {
+            for (var state of filter.state) {
+              if (state.state === true) {
+                genre += `&genre=${encodeURIComponent(state.value)}`;
+              }
+            }
+          }
+        }
       }
     }
     return await this.searchManga(query || "", status, type, genre, page);
@@ -182,25 +211,28 @@ class DefaultExtension extends MProvider {
     var res = await new Client().get(link, this.getHeaders());
     var doc = new Document(res.body);
 
-    var urls = [];
+    var pages = [];
+    var seen = new Set();
     var imgElements = doc.select("chapter-page img, picture img, img[data-src]");
     for (var img of imgElements) {
       var src = img.attr("data-src") || img.attr("src") || img.getSrc || "";
-      if (src && !urls.includes(src) && !src.includes("logo") && !src.includes("banner")) {
-        urls.push(src);
+      if (src && !seen.has(src) && !src.includes("logo") && !src.includes("banner")) {
+        seen.add(src);
+        pages.push({ url: src, headers: { "Referer": "https://mangapill.com/" } });
       }
     }
-    if (urls.length === 0) {
+    if (pages.length === 0) {
       var allImgs = doc.select("img");
       for (var fImg of allImgs) {
         var src = fImg.attr("data-src") || fImg.attr("src") || fImg.getSrc || "";
-        if (src && !urls.includes(src) && !src.includes("logo") && !src.includes("banner") && src.startsWith("http")) {
-          urls.push(src);
+        if (src && !seen.has(src) && !src.includes("logo") && !src.includes("banner") && src.startsWith("http")) {
+          seen.add(src);
+          pages.push({ url: src, headers: { "Referer": "https://mangapill.com/" } });
         }
       }
     }
 
-    return urls;
+    return pages;
   }
 
   getFilterList() {
@@ -283,7 +315,7 @@ class DefaultExtension extends MProvider {
           ["Vampire", "Vampire"],
           ["Yaoi", "Yaoi"],
           ["Yuri", "Yuri"],
-        ].map((x) => ({ type_name: "CheckBox", name: x[0], value: x[1] })),
+        ].map((x) => ({ type_name: "CheckBox", name: x[0], value: x[1], state: false })),
       },
     ];
   }

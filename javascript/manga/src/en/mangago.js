@@ -1,4 +1,5 @@
 const mangayomiSources = [{
+    "id": 204981753,
     "name": "Mangago",
     "lang": "en",
     "baseUrl": "https://www.mangago.me",
@@ -7,7 +8,7 @@ const mangayomiSources = [{
     "typeSource": "single",
     "itemType": 0,
     "version": "1.2.0",
-    "pkgPath": "manga/src/en/mangago.js"
+    "pkgPath": "javascript/manga/src/en/mangago.js"
 }];
 
 class DefaultExtension extends MProvider {
@@ -171,8 +172,10 @@ class DefaultExtension extends MProvider {
                 const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
                 if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !src.includes("loader") && !seen.has(src)) {
                     if (src.includes("mangapicgallery.com") || src.includes("/r/newpiclink/") || src.includes("/r/piclink/")) {
-                        seen.add(src);
-                        pages.push({ url: src, headers: { "Referer": "https://www.mangago.me/" } });
+                        // Use HTTP to avoid Dart SSL rejection of underscored subdomains (iweb_N.mangapicgallery.com)
+                        const httpSrc = src.replace(/^https:\/\/iweb_/, "http://iweb_");
+                        seen.add(httpSrc);
+                        pages.push({ url: httpSrc, headers: { "Referer": "https://www.mangago.me/" } });
                     }
                 }
             }

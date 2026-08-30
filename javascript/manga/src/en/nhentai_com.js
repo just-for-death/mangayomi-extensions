@@ -1,8 +1,8 @@
 const mangayomiSources = [
   {
-    "name": "nHentai",
+    "name": "nHentai.com",
     "lang": "en",
-    "id": 559183086,
+    "id": 3003141092,
     "baseUrl": "https://nhentai.net",
     "apiUrl": "https://nhentai.net/api/v2",
     "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/all.nhentai.png",
@@ -11,7 +11,7 @@ const mangayomiSources = [
     "isNsfw": true,
     "itemType": 0,
     "version": "1.1.0",
-    "pkgPath": "javascript/manga/src/en/nhentai.js"
+    "pkgPath": "javascript/manga/src/en/nhentai_com.js"
   }
 ];
 

@@ -1,6 +1,7 @@
 // prettier-ignore
 const mangayomiSources = [{
     "name": "Webtoons",
+    "id": 1938475629,
     "langs": ["en", "fr", "id", "th", "es", "zh", "de"],
     "baseUrl": "https://www.webtoons.com",
     "apiUrl": "",
@@ -11,7 +12,7 @@ const mangayomiSources = [{
     "version": "1.1.0",
     "dateFormat": "",
     "dateFormatLocale": "",
-    "pkgPath": "manga/src/all/webtoons.js"
+    "pkgPath": "javascript/manga/src/en/webtoons.js"
 }];
 
 class DefaultExtension extends MProvider {
@@ -113,7 +114,7 @@ class DefaultExtension extends MProvider {
       } else if (weekday) {
         url += `/originals/${weekday}?sortOrder=${sortOrder}`;
       } else if (genreType) {
-        url += `/genres/${genreType}?sortOrder=${sortOrder}`;
+        url += `/genres?genre=${genreType.toUpperCase()}&sortOrder=${sortOrder}`;
       }
     }
 
@@ -160,24 +161,35 @@ class DefaultExtension extends MProvider {
     const seenCh = new Set();
 
     const parsePageEpisodes = (d) => {
-      const links = d.select("ul#_listUl li a, ul.detail_list li a, li._episodeItem a, a[href*='/viewer']");
+      const links = d.select("a[href*='episode_no='], ul#_listUl li a, ul.detail_list li a, li._episodeItem a, a[href*='/viewer']");
       for (const el of links) {
-        var chUrl = el.getHref || el.attr("href") || "";
-        if (!chUrl || !chUrl.includes("/viewer")) continue;
+        var chUrl = el.attr("href") || "";
+        if (!chUrl || typeof chUrl !== 'string' || !chUrl.includes("/viewer")) continue;
         chUrl = chUrl.replace(/&amp;/g, "&");
         if (!chUrl.startsWith("http")) {
           chUrl = `https://www.webtoons.com${chUrl.startsWith("/") ? "" : "/"}${chUrl}`;
         }
-        if (seenCh.has(chUrl)) continue;
-        seenCh.add(chUrl);
 
         const nameEl = el.selectFirst("span.subj, span.ellipsis, .tx") || el.selectFirst("img");
         const name = (nameEl ? (nameEl.text || nameEl.attr("alt")) : "Episode").trim();
         const dateEl = el.selectFirst("span.date, span.tx");
+        
+        // Dedup logic: keep if it's new, OR if we previously saved a generic fallback but this one has a real name
+        if (seenCh.has(chUrl)) {
+            // Already seen. But check if the old one had a generic name and this one doesn't.
+            const oldIdx = chapters.findIndex(c => c.url === chUrl);
+            if (oldIdx !== -1 && chapters[oldIdx].name === "Episode" && name !== "Episode") {
+                // Update it
+                chapters.splice(oldIdx, 1);
+            } else {
+                continue;
+            }
+        }
+        seenCh.add(chUrl);
         var dateUpload = "";
         if (dateEl && dateEl.text) {
           const t = dateEl.text.trim();
-          const parsed = Date.parse(t);
+          const parsed = this.formatDateString(t, this.source.lang || (this.source.langs && this.source.langs[0]) || "en") || Date.parse(t) || 0;
           if (!isNaN(parsed) && parsed > 0) {
             dateUpload = parsed.toString();
           } else {
@@ -254,7 +266,7 @@ class DefaultExtension extends MProvider {
       description,
       author,
       status,
-      episodes: chapters,
+      chapters: chapters,
     };
   }
 
@@ -267,7 +279,7 @@ class DefaultExtension extends MProvider {
       es: "es",
       zh: "zh-hant",
       de: "de",
-    }[this.source.lang];
+    }[this.source.lang || (this.source.langs && this.source.langs[0]) || "en"];
   }
 
   formatDateString(dateStr, lang) {
@@ -301,10 +313,7 @@ class DefaultExtension extends MProvider {
         "nov.",
         "déc.",
       ],
-      id: [
-        "Jan",
-        "Feb",
-      ],
+      id: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"],
       th: [
         "ม.ค.",
         "ก.พ.",
@@ -401,7 +410,10 @@ class DefaultExtension extends MProvider {
       const src = (typeof img.attr === "function" ? (img.attr("data-url") || img.attr("src")) : (img.getSrc || img.getAttribute?.("data-url") || img.getAttribute?.("src"))) || "";
       if (src && !src.includes("sp_error") && !src.includes("banner") && !src.includes("logo") && !seen.has(src)) {
         seen.add(src);
-        urls.push(src.trim());
+        urls.push({
+          url: src.trim(),
+          headers: { "Referer": "https://www.webtoons.com/" }
+        });
       }
     }
     return urls;
