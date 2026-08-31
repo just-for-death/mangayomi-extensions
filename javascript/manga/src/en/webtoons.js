@@ -350,7 +350,7 @@ class DefaultExtension extends MProvider {
       zh: [], // No need for month names; uses yyyy年MM月dd日 format
       de: [], // No need for month names; uses dd.MM.yyyy format
     };
-    const months = monthTranslations[lang];
+    const months = (monthTranslations && lang && monthTranslations[lang]) ? monthTranslations[lang] : (monthTranslations["en"] || []);
     let parts;
     let month;
     let day;
