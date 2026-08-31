@@ -59,14 +59,12 @@ class DefaultExtension extends MProvider {
     return {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6832.64 Safari/537.36",
-      "Referer": "" // Deliberately empty per site requirements,
+      "Referer": "https://readcomicsonline.ru/"
     };
   }
 
   async getPopular(page) {
-    const url = page === 1 
-      ? `https://readcomicsonline.ru/changeMangaList?type=top_views`
-      : `https://readcomicsonline.ru/comic-list?page=${page}&sort=views`;
+    const url = `https://readcomicsonline.ru/comic-list?page=${page}&sort=views`;
     const res = await this.client.get(url, this.getHeaders());
     const doc = new Document(res.body);
     const list = [];
@@ -351,7 +349,7 @@ class DefaultExtension extends MProvider {
           seen.add(cleanSrc);
           pages.push({
             url: cleanSrc,
-            headers: { "Referer": "" /* Deliberately empty per site requirements */ }
+            headers: { "Referer": "https://readcomicsonline.ru/" }
           });
         }
       }
