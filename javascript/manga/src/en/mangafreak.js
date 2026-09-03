@@ -4,7 +4,7 @@ const mangayomiSources = [{
     "lang": "en",
     "baseUrl": "https://ww3.mangafreak.me",
     "apiUrl": "",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangafreak.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://ww3.mangafreak.me",
     "typeSource": "single",
     "itemType": 0,
     "version": "1.0.1",
@@ -24,6 +24,11 @@ class DefaultExtension extends MProvider {
         };
     }
 
+    _cleanImageUrl(url) {
+        if (!url) return "";
+        return url.replace("/mini_images/", "/manga_images/").replace(/\/55x85.*$/, ".jpg");
+    }
+
     async getPopular(page) {
         const url = `${this.source.baseUrl}/Genre/All/${page}`;
         const res = await this.client.get(url, this.getHeaders());
@@ -41,7 +46,7 @@ class DefaultExtension extends MProvider {
                 if (title && link) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl,
+                        imageUrl: this._cleanImageUrl(imageUrl),
                         link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
                     });
                 }
@@ -73,7 +78,7 @@ class DefaultExtension extends MProvider {
                 if (title && link) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl,
+                        imageUrl: this._cleanImageUrl(imageUrl),
                         link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
                     });
                 }
@@ -227,7 +232,7 @@ class DefaultExtension extends MProvider {
                     if (title && link) {
                         list.push({
                             name: title.trim(),
-                            imageUrl: imageUrl,
+                            imageUrl: this._cleanImageUrl(imageUrl),
                             link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
                         });
                     }
@@ -256,7 +261,7 @@ class DefaultExtension extends MProvider {
                 if (title && title.trim() && link) {
                     list.push({
                         name: title.trim(),
-                        imageUrl: imageUrl,
+                        imageUrl: this._cleanImageUrl(imageUrl),
                         link: link.startsWith('http') ? link : `${this.source.baseUrl}${link}`
                     });
                 }
@@ -296,7 +301,7 @@ class DefaultExtension extends MProvider {
             name: title.trim(),
             title: title.trim(),
             description: description.trim(),
-            imageUrl: imageUrl,
+            imageUrl: this._cleanImageUrl(imageUrl),
             chapters: chapters
         };
     }
@@ -304,16 +309,17 @@ class DefaultExtension extends MProvider {
     async getPageList(url) {
         const fullUrl = url.startsWith('http') ? url : `${this.source.baseUrl}${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
-        const doc = new Document(res.body);
+        const html = res.body || "";
+        const doc = new Document(html);
         const pages = [];
-        // ww3.mangafreak.me renders chapter pages inside div.mySlides.fade > img
-        // Old selectors (#gauto img, .my-slides img) no longer exist on the new domain
-        const imgTags = doc.querySelectorAll(".mySlides img");
+        const seen = new Set();
+        const imgTags = doc.select(".mySlides img, #gauto img, .my-slides img, div.slides_control img, img[src*='manga']");
         for (const img of imgTags) {
-            const src = img.attr("src") || img.attr("data-src");
-            if (src) {
+            const src = img.attr("src") || img.attr("data-src") || img.getSrc || "";
+            if (src && !src.includes("banner") && !src.includes("logo") && !seen.has(src)) {
+                seen.add(src);
                 pages.push({
-                    url: src,
+                    url: src.startsWith('http') ? src : `${this.source.baseUrl}${src.startsWith('/') ? '' : '/'}${src}`,
                     headers: {
                         "Referer": "https://ww3.mangafreak.me/",
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"

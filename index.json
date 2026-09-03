@@ -5,10 +5,10 @@
     "lang": "en",
     "baseUrl": "https://ww3.mangafreak.me",
     "apiUrl": "",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangafreak.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://ww3.mangafreak.me",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.0.1",
+    "version": "1.0.2",
     "pkgPath": "javascript/manga/src/en/mangafreak.js"
   },
   {
@@ -17,10 +17,10 @@
     "lang": "en",
     "baseUrl": "https://www.mangago.me",
     "apiUrl": "",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangago.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://www.mangago.me",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.3.0",
+    "version": "1.3.1",
     "pkgPath": "javascript/manga/src/en/mangago.js"
   },
   {
@@ -29,10 +29,10 @@
     "lang": "en",
     "baseUrl": "https://fanfox.net",
     "apiUrl": "",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.mangahere.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://www.mangahere.cc",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.0",
+    "version": "1.2.1",
     "pkgPath": "javascript/manga/src/en/mangahere.js"
   },
   {
@@ -55,12 +55,12 @@
     "id": 559183086,
     "baseUrl": "https://nhentai.net",
     "apiUrl": "https://nhentai.net/api/v2",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/all.nhentai.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://nhentai.net",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.1.1",
     "pkgPath": "javascript/manga/src/en/nhentai.js"
   },
   {
@@ -69,12 +69,12 @@
     "id": 3003141092,
     "baseUrl": "https://nhentai.net",
     "apiUrl": "https://nhentai.net/api/v2",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/all.nhentai.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://nhentai.net",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.1.1",
     "pkgPath": "javascript/manga/src/en/nhentai_com.js"
   },
   {
@@ -83,12 +83,12 @@
     "id": 768949056,
     "baseUrl": "https://9hentai.so",
     "apiUrl": "https://9hentai.so/api",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/javascript/icon/en.ninehentai.png",
+    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://9hentai.so",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.1.1",
     "pkgPath": "javascript/manga/src/en/ninehentai.js"
   },
   {
