@@ -64,20 +64,6 @@
     "pkgPath": "javascript/manga/src/en/nhentai.js"
   },
   {
-    "name": "nHentai.com",
-    "lang": "en",
-    "id": 3003141092,
-    "baseUrl": "https://nhentai.net",
-    "apiUrl": "https://nhentai.net/api/v2",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://nhentai.net",
-    "typeSource": "single",
-    "isManga": true,
-    "isNsfw": true,
-    "itemType": 0,
-    "version": "1.1.1",
-    "pkgPath": "javascript/manga/src/en/nhentai_com.js"
-  },
-  {
     "name": "NineHentai",
     "lang": "en",
     "id": 768949056,
