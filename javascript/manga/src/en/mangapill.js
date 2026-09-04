@@ -37,7 +37,9 @@ class DefaultExtension extends MProvider {
 
   async getPreference(key) {
     const preferences = new SharedPreferences();
-    return parseInt(preferences.get(key));
+    const val = preferences.get(key);
+    const parsed = parseInt(val);
+    return isNaN(parsed) ? 0 : parsed;
   }
 
   async getMangaList(slug) {
