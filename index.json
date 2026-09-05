@@ -8,7 +8,7 @@
     "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://ww3.mangafreak.me",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.0.2",
+    "version": "1.0.3",
     "pkgPath": "javascript/manga/src/en/mangafreak.js"
   },
   {
@@ -32,7 +32,7 @@
     "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://www.mangahere.cc",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.1",
+    "version": "1.2.2",
     "pkgPath": "javascript/manga/src/en/mangahere.js"
   },
   {
@@ -87,7 +87,7 @@
     "typeSource": "single",
     "isManga": true,
     "itemType": 0,
-    "version": "1.2.0",
+    "version": "1.2.1",
     "pkgPath": "javascript/manga/src/en/read_comics_online.js"
   },
   {
@@ -108,7 +108,7 @@
     "typeSource": "single",
     "isManga": true,
     "isNsfw": false,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/webtoons.js"
@@ -122,7 +122,7 @@
     "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://weebcentral.com",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "pkgPath": "javascript/manga/src/en/weeb_central.js"
   }
 ]

@@ -10,7 +10,7 @@ const mangayomiSources = [{
     "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://www.mangago.me",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.3.1",
+    "version": "1.3.0",
     "pkgPath": "javascript/manga/src/en/mangago.js"
 }];
 

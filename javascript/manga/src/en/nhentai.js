@@ -10,7 +10,7 @@ const mangayomiSources = [
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.1",
+    "version": "1.1.0",
     "pkgPath": "javascript/manga/src/en/nhentai.js"
   }
 ];
