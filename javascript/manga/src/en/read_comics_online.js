@@ -67,6 +67,16 @@ class DefaultExtension extends MProvider {
     };
   }
 
+  getCoverUrl(url) {
+    let slug = "";
+    if (url.includes("/comic/")) {
+      slug = url.split("/comic/")[1].split("/")[0].split("?")[0];
+    } else {
+      slug = url.replace("https://readcomicsonline.ru", "").replace(/^\/+/, "").split("?")[0];
+    }
+    return slug ? `https://cdn.readcomicsonline.ru/uploads/manga/${slug}/cover/cover_250x350.jpg` : "";
+  }
+
   async getPopular(page) {
     const url = `https://readcomicsonline.ru/comic-list?page=${page}&sort=views`;
     const res = await this.client.get(url, this.getHeaders());
