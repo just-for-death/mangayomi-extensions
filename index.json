@@ -5,10 +5,10 @@
     "lang": "en",
     "baseUrl": "https://ww3.mangafreak.me",
     "apiUrl": "",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://ww3.mangafreak.me",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/mangafreak.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.0.3",
+    "version": "1.0.4",
     "pkgPath": "javascript/manga/src/en/mangafreak.js"
   },
   {
@@ -17,10 +17,10 @@
     "lang": "en",
     "baseUrl": "https://www.mangago.me",
     "apiUrl": "",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://www.mangago.me",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.3.1",
+    "version": "1.3.2",
     "pkgPath": "javascript/manga/src/en/mangago.js"
   },
   {
@@ -29,10 +29,10 @@
     "lang": "en",
     "baseUrl": "https://fanfox.net",
     "apiUrl": "",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://www.mangahere.cc",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/mangahere.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.2",
+    "version": "1.2.3",
     "pkgPath": "javascript/manga/src/en/mangahere.js"
   },
   {
@@ -41,10 +41,10 @@
     "lang": "en",
     "baseUrl": "https://mangapill.com",
     "apiUrl": "",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://mangapill.com/",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/mangapill.png",
     "typeSource": "single",
     "isManga": true,
-    "version": "1.3.1",
+    "version": "1.3.2",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/mangapill.js"
@@ -55,12 +55,12 @@
     "id": 559183086,
     "baseUrl": "https://nhentai.net",
     "apiUrl": "https://nhentai.net/api/v2",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://nhentai.net",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/nhentai.png",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.1",
+    "version": "1.1.2",
     "pkgPath": "javascript/manga/src/en/nhentai.js"
   },
   {
@@ -69,12 +69,12 @@
     "id": 768949056,
     "baseUrl": "https://9hentai.so",
     "apiUrl": "https://9hentai.so/api",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://9hentai.so",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/ninehentai.png",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.1",
+    "version": "1.1.2",
     "pkgPath": "javascript/manga/src/en/ninehentai.js"
   },
   {
@@ -83,11 +83,11 @@
     "id": 376287717,
     "baseUrl": "https://readcomicsonline.ru",
     "apiUrl": "",
-    "iconUrl": "https://raw.githubusercontent.com/m2k3a/mangayomi-extensions/main/dart/manga/multisrc/mmrcms/src/en/readcomicsonline/icon.png",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/read_comics_online.png",
     "typeSource": "single",
     "isManga": true,
     "itemType": 0,
-    "version": "1.2.2",
+    "version": "1.2.3",
     "pkgPath": "javascript/manga/src/en/read_comics_online.js"
   },
   {
@@ -104,11 +104,11 @@
     ],
     "baseUrl": "https://www.webtoons.com",
     "apiUrl": "",
-    "iconUrl": "https://upload.wikimedia.org/wikipedia/commons/0/09/Naver_Line_Webtoon_logo.png",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/webtoons.png",
     "typeSource": "single",
     "isManga": true,
     "isNsfw": false,
-    "version": "1.2.0",
+    "version": "1.2.1",
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/webtoons.js"
@@ -119,10 +119,10 @@
     "lang": "en",
     "baseUrl": "https://weebcentral.com",
     "apiUrl": "",
-    "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://weebcentral.com",
+    "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/weeb_central.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.0",
+    "version": "1.2.1",
     "pkgPath": "javascript/manga/src/en/weeb_central.js"
   }
 ]
