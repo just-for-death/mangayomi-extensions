@@ -20,7 +20,7 @@
     "iconUrl": "https://raw.githubusercontent.com/just-for-death/mangayomi-extensions/main/icons/mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.3.2",
+    "version": "1.3.3",
     "pkgPath": "javascript/manga/src/en/mangago.js"
   },
   {
