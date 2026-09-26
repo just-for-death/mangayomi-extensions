@@ -9,6 +9,8 @@
     "typeSource": "single",
     "itemType": 0,
     "version": "1.0.4",
+    "sha256": "f6ec4f74b88d5c18b5bae4df46c27ffa74af687c73e8e9b40f2a3fd9d47d5390",
+    "size": 16700,
     "pkgPath": "javascript/manga/src/en/mangafreak.js"
   },
   {
@@ -21,6 +23,8 @@
     "typeSource": "single",
     "itemType": 0,
     "version": "1.3.3",
+    "sha256": "ebbad7b27e393ca5a412a1311930ef4a23a599a782725ab891a3491920e612e0",
+    "size": 65459,
     "pkgPath": "javascript/manga/src/en/mangago.js"
   },
   {
@@ -33,6 +37,8 @@
     "typeSource": "single",
     "itemType": 0,
     "version": "1.2.3",
+    "sha256": "994bd9f308934538f44d64a435e4d5182aee516098eb334f59cf52e8604fdd25",
+    "size": 19525,
     "pkgPath": "javascript/manga/src/en/mangahere.js"
   },
   {
@@ -46,6 +52,8 @@
     "isManga": true,
     "itemType": 0,
     "version": "1.3.2",
+    "sha256": "8913bbd7efa278a942fb4a93f43e5b6a3c9c5744e15209b7bc490c2ce97cfecf",
+    "size": 11978,
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/mangapill.js"
@@ -62,6 +70,8 @@
     "isNsfw": true,
     "itemType": 0,
     "version": "1.1.2",
+    "sha256": "2ba5359ac9ee243135a5a1871718b89feea9f2f5812cbe7e2f812943268efdab",
+    "size": 7503,
     "pkgPath": "javascript/manga/src/en/nhentai.js"
   },
   {
@@ -76,6 +86,8 @@
     "isNsfw": true,
     "itemType": 0,
     "version": "1.1.2",
+    "sha256": "b53a51bbf38ee325751ab67822424bdcb4f5f5e9d94dc515a3415f7db107d8eb",
+    "size": 7660,
     "pkgPath": "javascript/manga/src/en/ninehentai.js"
   },
   {
@@ -89,6 +101,8 @@
     "isManga": true,
     "itemType": 0,
     "version": "1.2.3",
+    "sha256": "24003a8948cdd962f7ffb4d4732d7209387c3ac786d11407ab36bec4ef253b67",
+    "size": 16567,
     "pkgPath": "javascript/manga/src/en/read_comics_online.js"
   },
   {
@@ -112,6 +126,8 @@
     "isNsfw": false,
     "itemType": 0,
     "version": "1.2.1",
+    "sha256": "ac07e7678813222f968ac782734a72574d52bef57b4bab4bd4620d5da62cf362",
+    "size": 26833,
     "dateFormat": "",
     "dateFormatLocale": "",
     "pkgPath": "javascript/manga/src/en/webtoons.js"
@@ -126,6 +142,8 @@
     "typeSource": "single",
     "itemType": 0,
     "version": "1.2.1",
+    "sha256": "adebbc5fbe1d654fb96eface3fa3398ccd2f6a80c86d53d2b5633fbb19153148",
+    "size": 11354,
     "pkgPath": "javascript/manga/src/en/weeb_central.js"
   }
 ]
