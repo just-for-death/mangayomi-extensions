@@ -7,7 +7,7 @@ const mangayomiSources = [{
     "iconUrl": "asset:assets/icons/sources/weeb_central.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.2",
+    "version": "1.2.3",
     "pkgPath": "javascript/manga/src/en/weeb_central.js"
 }];
 
@@ -87,8 +87,19 @@ class DefaultExtension extends MProvider {
             }
         }
 
-        var nextBtn = doc.selectFirst("a[href*='page=']:contains('Next'), button:contains('Next'), a[rel='next']");
+        var nextBtn = doc.selectFirst("a[rel='next']");
         var hasNextPage = !!nextBtn;
+        if (!hasNextPage) {
+            // ':contains' is not supported by the parser — check link text in JS.
+            var pageLinks = doc.select("a[href*='page='], a[href*='offset=']");
+            for (var pl of pageLinks) {
+                var t = (pl.text || "").trim().toLowerCase();
+                if (t === "next" || t === ">" || t === "»" || t.indexOf("next") !== -1) {
+                    hasNextPage = true;
+                    break;
+                }
+            }
+        }
         return { list, hasNextPage };
         } catch (_) { return { list: [], hasNextPage: false }; }
     }

@@ -32,7 +32,7 @@ Sunfire also ships the same PNGs as `asset:assets/icons/sources/<name>.png` so B
 | NineHentai | EN | 1.1.2 | `https://9hentai.so` | NSFW |
 | Read Comics Online | EN | 1.2.5 | `https://readcomicsonline.ru` | Comics + `getCoverUrl` |
 | Webtoons | EN | 1.2.1 | `https://www.webtoons.com` | Multi-lang catalog |
-| Weeb Central | EN | 1.2.2 | `https://weebcentral.com` | Popular, latest, filters |
+| Weeb Central | EN | 1.2.3 | `https://weebcentral.com` | Popular, latest, filters |
 
 ## Sync into Sunfire
 
