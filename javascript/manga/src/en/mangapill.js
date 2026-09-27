@@ -8,10 +8,10 @@ const mangayomiSources = [
     "iconUrl": "asset:assets/icons/sources/mangapill.png",
     "typeSource": "single",
     "isManga": true,
-    "version": "1.3.2",
+    "version": "1.3.3",
     "dateFormat": "",
     "dateFormatLocale": "",
-    "pkgPath": "javascript/manga/src/en/mangapill.js",
+    "pkgPath": "javascript/manga/src/en/mangapill.js"
   },
 ];
 

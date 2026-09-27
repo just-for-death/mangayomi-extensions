@@ -9,8 +9,8 @@ const mangayomiSources = [
     "typeSource": "single",
     "isManga": true,
     "itemType": 0,
-    "version": "1.2.3",
-    "pkgPath": "javascript/manga/src/en/read_comics_online.js",
+    "version": "1.2.4",
+    "pkgPath": "javascript/manga/src/en/read_comics_online.js"
   },
 ];
 
