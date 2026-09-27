@@ -25,12 +25,12 @@ Sunfire also ships the same PNGs as `asset:assets/icons/sources/<name>.png` so B
 | Source | Lang | Version | Base URL | Notes |
 |---|---|---|---|---|
 | MangaFreak | EN | 1.0.5 | `https://ww3.mangafreak.me` | Popular, latest, search |
-| Mangago | EN | 1.3.4 | `https://www.mangago.me` | Cloudflare-aware |
+| Mangago | EN | 1.3.5 | `https://www.mangago.me` | Cloudflare-aware |
 | MangaHere | EN | 1.2.4 | `https://fanfox.net` | Popular, latest, search |
 | Mangapill | EN | 1.3.3 | `https://mangapill.com` | High-res reader |
 | nHentai | EN | 1.1.3 | `https://nhentai.net` | NSFW |
 | NineHentai | EN | 1.1.2 | `https://9hentai.so` | NSFW |
-| Read Comics Online | EN | 1.2.4 | `https://readcomicsonline.ru` | Comics + `getCoverUrl` |
+| Read Comics Online | EN | 1.2.5 | `https://readcomicsonline.ru` | Comics + `getCoverUrl` |
 | Webtoons | EN | 1.2.1 | `https://www.webtoons.com` | Multi-lang catalog |
 | Weeb Central | EN | 1.2.2 | `https://weebcentral.com` | Popular, latest, filters |
 

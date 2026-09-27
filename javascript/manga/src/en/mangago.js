@@ -10,7 +10,7 @@ const mangayomiSources = [{
     "iconUrl": "asset:assets/icons/sources/mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.3.4",
+    "version": "1.3.5",
     "pkgPath": "javascript/manga/src/en/mangago.js"
 }];
 
@@ -43,6 +43,9 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
+        // Selectors overlap (an entry can match both .updatesli and .pic_list
+        // li); without dedupe every title renders twice in the grid.
+        const seen = new Set();
         const items = doc.querySelectorAll(".updatesli, .flex1.listitem, #information li, .pic_list li");
 
         for (const item of items) {
@@ -54,10 +57,13 @@ class DefaultExtension extends MProvider {
                 var imageUrl = img ? (img.attr("data-src") || img.attr("src") || img.attr("data-original") || "") : "";
                 if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
                 if (title && link) {
+                    const abs = this._absUrl(link);
+                    if (seen.has(abs)) continue;
+                    seen.add(abs);
                     list.push({
                         name: title.trim(),
                         imageUrl: imageUrl,
-                        link: this._absUrl(link)
+                        link: abs
                     });
                 }
             }
@@ -70,6 +76,9 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
+        // Selectors overlap (an entry can match both .updatesli and .pic_list
+        // li); without dedupe every title renders twice in the grid.
+        const seen = new Set();
         const items = doc.querySelectorAll(".updatesli, .flex1.listitem, #information li, .pic_list li");
 
         for (const item of items) {
@@ -81,10 +90,13 @@ class DefaultExtension extends MProvider {
                 var imageUrl = img ? (img.attr("data-src") || img.attr("src") || img.attr("data-original") || "") : "";
                 if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
                 if (title && link) {
+                    const abs = this._absUrl(link);
+                    if (seen.has(abs)) continue;
+                    seen.add(abs);
                     list.push({
                         name: title.trim(),
                         imageUrl: imageUrl,
-                        link: this._absUrl(link)
+                        link: abs
                     });
                 }
             }
@@ -117,6 +129,9 @@ class DefaultExtension extends MProvider {
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
         const list = [];
+        // Selectors overlap (an entry can match both .updatesli and .pic_list
+        // li); without dedupe every title renders twice in the grid.
+        const seen = new Set();
         const items = doc.querySelectorAll(".updatesli, .flex1.listitem, #information li, .pic_list li");
 
         for (const item of items) {
@@ -128,10 +143,13 @@ class DefaultExtension extends MProvider {
                 var imageUrl = img ? (img.attr("data-src") || img.attr("src") || img.attr("data-original") || "") : "";
                 if (imageUrl.startsWith("//")) imageUrl = `https:${imageUrl}`;
                 if (title && link) {
+                    const abs = this._absUrl(link);
+                    if (seen.has(abs)) continue;
+                    seen.add(abs);
                     list.push({
                         name: title.trim(),
                         imageUrl: imageUrl,
-                        link: this._absUrl(link)
+                        link: abs
                     });
                 }
             }

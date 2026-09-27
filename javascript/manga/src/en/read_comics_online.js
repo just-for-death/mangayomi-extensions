@@ -9,7 +9,7 @@ const mangayomiSources = [
     "typeSource": "single",
     "isManga": true,
     "itemType": 0,
-    "version": "1.2.4",
+    "version": "1.2.5",
     "pkgPath": "javascript/manga/src/en/read_comics_online.js"
   },
 ];
@@ -339,6 +339,10 @@ class DefaultExtension extends MProvider {
         if (!href) continue;
         const parts = href.replace("https://readcomicsonline.ru", "").split("/").filter(Boolean);
         if (parts.length < 3) continue; // Must be ['comic', 'slug', 'chapter_num']
+        // Drop links to OTHER series (related-comics sections). Without this,
+        // a series page's "you may also like" links become bogus chapters of
+        // the scraped series, saved under its mangaId downstream.
+        if (parts[1] !== slug) continue;
         if (seen.has(href)) continue;
         seen.add(href);
 
