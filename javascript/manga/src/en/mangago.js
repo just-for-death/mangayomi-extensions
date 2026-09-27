@@ -10,7 +10,7 @@ const mangayomiSources = [{
     "iconUrl": "asset:assets/icons/sources/mangago.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.3.3",
+    "version": "1.3.4",
     "pkgPath": "javascript/manga/src/en/mangago.js"
 }];
 
@@ -255,7 +255,8 @@ class DefaultExtension extends MProvider {
         // 1. Decrypt first batch
         const firstBatch = this._decryptImgSrcs(html, iv, candidateKeys);
         for (const rawUrl of firstBatch) {
-            const cleanUrl = rawUrl.replace(/^https:\/\/iweb_/, "http://iweb_");
+            // Keep HTTPS: no cleartext downgrade (Sunfire handles underscored hosts).
+            const cleanUrl = rawUrl;
             if (!seen.has(cleanUrl)) {
                 seen.add(cleanUrl);
                 pages.push({ url: cleanUrl, headers: { "Referer": "https://www.mangago.me/" } });
@@ -292,7 +293,8 @@ class DefaultExtension extends MProvider {
                         if (batchRes && batchRes.body) {
                             const batchUrls = this._decryptImgSrcs(batchRes.body, iv, candidateKeys);
                             for (const rawUrl of batchUrls) {
-                                const cleanUrl = rawUrl.replace(/^https:\/\/iweb_/, "http://iweb_");
+                                // Keep HTTPS: no cleartext downgrade (Sunfire handles underscored hosts).
+            const cleanUrl = rawUrl;
                                 if (!seen.has(cleanUrl)) {
                                     seen.add(cleanUrl);
                                     pages.push({ url: cleanUrl, headers: { "Referer": "https://www.mangago.me/" } });
@@ -327,7 +329,8 @@ class DefaultExtension extends MProvider {
                             if (utf8Str && utf8Str.includes("http")) {
                                 const rawUrls = utf8Str.split(",").map(u => u.trim()).filter(u => u.startsWith("http"));
                                 for (const rawUrl of rawUrls) {
-                                    const cleanUrl = rawUrl.replace(/^https:\/\/iweb_/, "http://iweb_");
+                                    // Keep HTTPS: no cleartext downgrade (Sunfire handles underscored hosts).
+            const cleanUrl = rawUrl;
                                     if (!seen.has(cleanUrl)) {
                                         seen.add(cleanUrl);
                                         pages.push({ url: cleanUrl, headers: { "Referer": "https://www.mangago.me/" } });
@@ -348,7 +351,8 @@ class DefaultExtension extends MProvider {
             const src = img.attr("data-src") || img.attr("src") || img.attr("data-original") || "";
             if (src && src.startsWith("http") && !src.endsWith(".js") && !src.endsWith(".css") && !src.includes("avatar") && !src.includes("arrow") && !src.includes("logo") && !src.includes("backtotop") && !src.includes("pubfuture") && !src.includes("pubadx") && !src.includes("loader") && !seen.has(src)) {
                 if (src.includes("mangapicgallery.com") || src.includes("/r/newpiclink/") || src.includes("/r/piclink/")) {
-                    const httpSrc = src.replace(/^https:\/\/iweb_/, "http://iweb_");
+                    // Keep HTTPS: no cleartext downgrade.
+                    const httpSrc = src;
                     seen.add(httpSrc);
                     pages.push({ url: httpSrc, headers: { "Referer": "https://www.mangago.me/" } });
                 }

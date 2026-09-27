@@ -10,7 +10,7 @@ const mangayomiSources = [
     "isManga": true,
     "isNsfw": true,
     "itemType": 0,
-    "version": "1.1.2",
+    "version": "1.1.3",
     "pkgPath": "javascript/manga/src/en/nhentai.js"
   }
 ];
@@ -50,23 +50,35 @@ class DefaultExtension extends MProvider {
     };
   }
 
+  _safeJson(body, fallback) {
+    try {
+      if (!body) return fallback;
+      return JSON.parse(body);
+    } catch (_) { return fallback; }
+  }
+
   async getPopular(page) {
+    try {
     const res = await this.client.get(`${API_BASE}/search?query=language:english&sort=popular&page=${page}&per_page=25`, this.getHeaders());
-    const data = JSON.parse(res.body);
+    const data = this._safeJson(res.body, {});
     const result = data.result || (Array.isArray(data) ? data : []);
     const list = result.map(g => this._mapGallery(g)).filter(Boolean);
     return { list: list, hasNextPage: list.length >= 20 };
+    } catch (_) { return { list: [], hasNextPage: false }; }
   }
 
   async getLatestUpdates(page) {
+    try {
     const res = await this.client.get(`${API_BASE}/galleries?page=${page}&per_page=25`, this.getHeaders());
-    const data = JSON.parse(res.body);
+    const data = this._safeJson(res.body, {});
     const result = data.result || (Array.isArray(data) ? data : []);
     const list = result.map(g => this._mapGallery(g)).filter(Boolean);
     return { list: list, hasNextPage: list.length >= 20 };
+    } catch (_) { return { list: [], hasNextPage: false }; }
   }
 
   async search(query, page, filters) {
+    try {
     let sort = "";
     const qParts = [];
 
@@ -97,17 +109,19 @@ class DefaultExtension extends MProvider {
     if (sort) url += `&sort=${sort}`;
 
     const res = await this.client.get(url, this.getHeaders());
-    const data = JSON.parse(res.body);
+    const data = this._safeJson(res.body, {});
     const result = data.result || (Array.isArray(data) ? data : []);
     const list = result.map(g => this._mapGallery(g)).filter(Boolean);
     return { list: list, hasNextPage: list.length >= 20 };
+    } catch (_) { return { list: [], hasNextPage: false }; }
   }
 
   async getDetail(url) {
+    try {
     const idMatch = url.match(/\/g\/(\d+)/);
     const id = idMatch ? idMatch[1] : url.split("?")[0].replace(/\/$/, "").split("/").pop();
     const res = await this.client.get(`${API_BASE}/galleries/${id}`, this.getHeaders());
-    const g = JSON.parse(res.body);
+    const g = this._safeJson(res.body, {});
 
     const title = ((g.title && (g.title.english || g.title.pretty || g.title.japanese)) || ("Gallery #" + id)).trim();
 
@@ -130,19 +144,22 @@ class DefaultExtension extends MProvider {
         dateUpload: g.upload_date ? new Date(g.upload_date * 1000).toISOString().split('T')[0] : ""
       }]
     };
+    } catch (_) { return { name: "Gallery", description: "", imageUrl: "", chapters: [] }; }
   }
 
   async getPageList(url) {
+    try {
     const idMatch = url.match(/\/g\/(\d+)/);
     const id = idMatch ? idMatch[1] : url.split("?")[0].replace(/\/$/, "").split("/").pop();
     const res = await this.client.get(`${API_BASE}/galleries/${id}`, this.getHeaders());
-    const g = JSON.parse(res.body);
+    const g = this._safeJson(res.body, {});
 
     return (g.pages || []).map(p => {
       let path = p.path || "";
       if (path && !path.startsWith("http")) path = IMAGE_SERVER + path;
       return { url: path, headers: this.getHeaders() };
     }).filter(p => p.url);
+    } catch (_) { return []; }
   }
 
   getFilterList() {

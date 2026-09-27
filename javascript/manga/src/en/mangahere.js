@@ -7,7 +7,7 @@ const mangayomiSources = [{
     "iconUrl": "asset:assets/icons/sources/mangahere.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.3",
+    "version": "1.2.4",
     "pkgPath": "javascript/manga/src/en/mangahere.js"
 }];
 
@@ -22,6 +22,136 @@ class DefaultExtension extends MProvider {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
             "Referer": "https://fanfox.net/"
         };
+    }
+
+    // Static Dean Edwards packer unpacker — no eval / new Function.
+    // Fanfox ships `eval(function(p,a,c,k,e,d){...}('payload',radix,count,'a|b|c'.split('|')))`
+    // We extract (p,a,c,k) and perform the word-substitution loop locally so a
+    // compromised page can never execute arbitrary JS in the host runtime.
+    _unpackDeanEdwards(packed) {
+        try {
+            if (!packed || packed.indexOf("function(p,a,c,k,e,d)") === -1) return "";
+            if (packed.length > 100000) return "";
+            // Support both single- and double-quoted payloads.
+            var m = packed.match(/\}\(\s*'(?:[^'\\]|\\.)*'\s*,\s*\d+\s*,\s*\d+\s*,\s*'(?:[^'\\]|\\.)*'\.split\('\|'\)/);
+            var quote = "'";
+            if (!m) {
+                m = packed.match(/\}\(\s*"(?:[^"\\]|\\.)*"\s*,\s*\d+\s*,\s*\d+\s*,\s*"(?:[^"\\]|\\.)*"\.split\("\|"\)/);
+                quote = '"';
+            }
+            if (!m) return "";
+            var argsStr = m[0].substring(2);
+            // Parse p, a, c, kStr with a tiny scanner to respect escapes.
+            var parts = [];
+            var cur = "";
+            var inS = false;
+            var q = null;
+            var esc = false;
+            var depthParen = 0;
+            for (var i = 0; i < argsStr.length; i++) {
+                var ch = argsStr[i];
+                if (inS) {
+                    cur += ch;
+                    if (esc) { esc = false; }
+                    else if (ch === "\\") { esc = true; }
+                    else if (ch === q) { inS = false; }
+                } else {
+                    if (ch === "'" || ch === '"') { inS = true; q = ch; cur += ch; }
+                    else if (ch === "," && depthParen === 0) { parts.push(cur.trim()); cur = ""; }
+                    else {
+                        if (ch === "(") depthParen++;
+                        if (ch === ")") depthParen--;
+                        cur += ch;
+                    }
+                }
+            }
+            parts.push(cur.trim());
+            if (parts.length < 4) return "";
+            var unq = function (s) {
+                s = s.trim();
+                if ((s[0] === "'" && s[s.length - 1] === "'") || (s[0] === '"' && s[s.length - 1] === '"')) {
+                    var inner = s.substring(1, s.length - 1);
+                    // Unescape only what the packer emits; keep it conservative.
+                    return inner.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+                }
+                return s;
+            };
+            var p = unq(parts[0]);
+            var a = parseInt(parts[1], 10);
+            var c = parseInt(parts[2], 10);
+            var kStr = unq(parts[3].split(".split")[0]);
+            if (!p || !a || !c || c > 2000 || p.length > 100000) return "";
+            var k = kStr.split("|");
+            var chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            var encode = function (n) {
+                if (a <= 36) return n.toString(a);
+                if (n === 0) return "0";
+                var s = "";
+                var v = n;
+                while (v > 0) { s = chars[v % a] + s; v = Math.floor(v / a); }
+                return s;
+            };
+            var e = c;
+            while (e-- > 0) {
+                if (k[e]) {
+                    var w = encode(e);
+                    p = p.replace(new RegExp("\\b" + w + "\\b", "g"), k[e]);
+                }
+            }
+            return p;
+        } catch (_) { return ""; }
+    }
+
+    // Extract a string literal or simple "a"+"b" concatenation without exec.
+    // Returns "" for anything else (function calls, member access, etc.).
+    _staticStringLiteral(expr) {
+        try {
+            var s = (expr || "").trim().replace(/;$/, "").trim();
+            if (!s) return "";
+            // Reject anything that looks like code, not data.
+            if (/[();=]/.test(s.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g, ""))) {
+                // Allow only + concatenation between literals.
+                if (s.indexOf("+") === -1) return "";
+                var chunks = s.split("+");
+                var out = "";
+                for (var i = 0; i < chunks.length; i++) {
+                    var t = chunks[i].trim();
+                    if ((t[0] === '"' && t[t.length - 1] === '"') || (t[0] === "'" && t[t.length - 1] === "'")) {
+                        out += t.substring(1, t.length - 1).replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+                    } else { return ""; }
+                }
+                return out.length < 5000 ? out : "";
+            }
+            if ((s[0] === '"' && s[s.length - 1] === '"') || (s[0] === "'" && s[s.length - 1] === "'")) {
+                var inner = s.substring(1, s.length - 1).replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+                return inner.length < 5000 ? inner : "";
+            }
+            return "";
+        } catch (_) { return ""; }
+    }
+
+    _extractPixAndPaths(unpacked) {
+        try {
+            if (!unpacked || unpacked.length > 100000) return null;
+            var pixM = unpacked.match(/pix\s*=\s*["']([^"']+)["']/);
+            var pvalM = unpacked.match(/pvalue\s*=\s*\[(.*?)\]/s);
+            if (pixM && pvalM) {
+                var pix = pixM[1];
+                var paths = pvalM[1].split(",").map(function (x) {
+                    return x.trim().replace(/^["']|["']$/g, "");
+                }).filter(Boolean);
+                return { pix: pix, paths: paths };
+            }
+            // dm5imagefun() style: return ["...","..."];
+            var retM = unpacked.match(/return\s*\[(.*?)\]/s);
+            if (retM) {
+                var arr = retM[1].split(",").map(function (x) {
+                    return x.trim().replace(/^["']|["']$/g, "");
+                }).filter(function (x) { return x.indexOf("http") !== -1 || x.indexOf("//") === 0 || x.indexOf("/") === 0; });
+                if (arr.length > 0) return { pix: "", paths: arr };
+            }
+            return null;
+        } catch (_) { return null; }
     }
 
     async getPopular(page) {
@@ -280,26 +410,22 @@ class DefaultExtension extends MProvider {
             const pages = [];
             const seen = new Set();
 
-            // Extract key from packed script in chapter html
-            // SECURITY NOTE: This uses Function constructor to unpack obfuscated JavaScript
-            // from the source website. The input is validated to only process expected patterns
-            // and runs in a limited scope. This is required because MangaHere uses JavaScript
-            // packing to protect their chapter decryption keys.
+            // Extract key from packed script in chapter html.
+            // Static unpack only — never eval remote JS.
             var guidkey = "";
             try {
                 const sIdx = html.indexOf("eval(function(p,a,c,k,e,d)");
                 if (sIdx !== -1) {
                     const sEnd = html.indexOf("</script>", sIdx);
                     const packedScript = html.substring(sIdx, sEnd !== -1 ? sEnd : undefined);
-                    
+
                     // Validate that we're only processing expected packed script patterns
                     if (packedScript && packedScript.includes("function(p,a,c,k,e,d)") && packedScript.length < 10000) {
-                        const expr = packedScript.replace(/^eval\(/, "(");
-                        const unpacked = new Function("return " + expr)();
+                        const unpacked = this._unpackDeanEdwards(packedScript);
                         if (unpacked) {
                             const kMatch = unpacked.match(/guidkey\s*=\s*([^;]+);/);
                             if (kMatch) {
-                                guidkey = new Function("return " + kMatch[1])();
+                                guidkey = this._staticStringLiteral(kMatch[1]);
                             }
                         }
                     }
@@ -333,17 +459,14 @@ class DefaultExtension extends MProvider {
                         .replace(/&#39;/g, "'")
                         .trim();
 
-                    // SECURITY NOTE: Second eval() usage for unpacking chapter function response
-                    // Input is validated for size and expected patterns before execution
+                    // Static unpack only — never eval remote JS.
                     if (rawBody && rawBody.includes("eval(") && rawBody.length < 50000) {
-                        const expr = rawBody.replace(/^eval\(/, "(");
-                        const unpackedFun = new Function("return " + expr)();
+                        const unpackedFun = this._unpackDeanEdwards(rawBody);
                         if (!unpackedFun) continue;
-                        const pixMatch = unpackedFun.match(/pix\s*=\s*["']([^"']+)["']/);
-                        const pvalueMatch = unpackedFun.match(/pvalue\s*=\s*\[(.*?)\]/);
-                        if (pixMatch && pvalueMatch) {
-                            const pix = pixMatch[1];
-                            const paths = pvalueMatch[1].split(',').map(s => s.replace(/["']/g, '').trim());
+                        const parsed = this._extractPixAndPaths(unpackedFun);
+                        if (parsed) {
+                            const pix = parsed.pix;
+                            const paths = parsed.paths;
                             for (let path of paths) {
                                 let img = path;
                                 if (!img.startsWith('//') && !img.startsWith('http')) {
@@ -356,21 +479,6 @@ class DefaultExtension extends MProvider {
                                         url: fullImg,
                                         headers: { "Referer": "https://fanfox.net/" }
                                     });
-                                }
-                            }
-                        } else {
-                            // Fallback to function approach if regex fails
-                            const d = new Function(unpackedFun + "; return (typeof d !== 'undefined' ? d : (typeof dm5imagefun !== 'undefined' ? dm5imagefun() : []));")();
-                            if (d && Array.isArray(d)) {
-                                for (let img of d) {
-                                    if (img && !seen.has(img)) {
-                                        seen.add(img);
-                                        const fullImg = img.startsWith("//") ? `https:${img}` : img;
-                                        pages.push({
-                                            url: fullImg,
-                                            headers: { "Referer": "https://fanfox.net/" }
-                                        });
-                                    }
                                 }
                             }
                         }

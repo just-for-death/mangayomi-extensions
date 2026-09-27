@@ -7,7 +7,7 @@ const mangayomiSources = [{
     "iconUrl": "asset:assets/icons/sources/mangafreak.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.0.4",
+    "version": "1.0.5",
     "pkgPath": "javascript/manga/src/en/mangafreak.js"
 }];
 
@@ -30,6 +30,7 @@ class DefaultExtension extends MProvider {
     }
 
     async getPopular(page) {
+        try {
         const url = `${this.source.baseUrl}/Genre/All/${page}`;
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
@@ -57,9 +58,12 @@ class DefaultExtension extends MProvider {
             list: list,
             hasNextPage: list.length > 0
         };
+        } catch (_) { return { list: [], hasNextPage: false }; }
     }
 
+
     async getLatestUpdates(page) {
+        try {
         const url = `${this.source.baseUrl}/Latest_Releases/${page}`;
         const res = await this.client.get(url, this.getHeaders());
         const doc = new Document(res.body);
@@ -89,7 +93,9 @@ class DefaultExtension extends MProvider {
             list: list,
             hasNextPage: list.length > 0
         };
+        } catch (_) { return { list: [], hasNextPage: false }; }
     }
+
 
 
     getFilterList() {
@@ -188,6 +194,7 @@ class DefaultExtension extends MProvider {
     }
 
     async search(query, page, filters) {
+        try {
         // When no query is provided but filters are active, use the genre browse URL
         // with query params (ww3.mangafreak.me supports ?Status=X&SortBy=Y)
         if (!query || query.trim() === '') {
@@ -272,9 +279,12 @@ class DefaultExtension extends MProvider {
             list: list,
             hasNextPage: list.length > 0
         };
+        } catch (_) { return { list: [], hasNextPage: false }; }
     }
 
+
     async getDetail(url) {
+        try {
         const fullUrl = url.startsWith('http') ? url : `${this.source.baseUrl}${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
         const doc = new Document(res.body);
@@ -313,9 +323,12 @@ class DefaultExtension extends MProvider {
             imageUrl: this._cleanImageUrl(imageUrl),
             chapters: chapters
         };
+        } catch (_) { return { name: "", description: "", imageUrl: "", chapters: [] }; }
     }
 
+
     async getPageList(url) {
+        try {
         const fullUrl = url.startsWith('http') ? url : `${this.source.baseUrl}${url}`;
         const res = await this.client.get(fullUrl, this.getHeaders());
         const html = res.body || "";
@@ -337,5 +350,7 @@ class DefaultExtension extends MProvider {
             }
         }
         return pages;
+        } catch (_) { return []; }
     }
+
 }

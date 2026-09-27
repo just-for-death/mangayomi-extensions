@@ -7,7 +7,7 @@ const mangayomiSources = [{
     "iconUrl": "asset:assets/icons/sources/weeb_central.png",
     "typeSource": "single",
     "itemType": 0,
-    "version": "1.2.1",
+    "version": "1.2.2",
     "pkgPath": "javascript/manga/src/en/weeb_central.js"
 }];
 
@@ -27,20 +27,27 @@ class DefaultExtension extends MProvider {
     }
 
     async getPopular(page) {
+        try {
         const filters = this.getFilterList();
         filters[0].state = 2;
         return await this.search("", page, filters);
+        } catch (_) { return { list: [], hasNextPage: false }; }
     }
 
+
     async getLatestUpdates(page) {
+        try {
         const filters = this.getFilterList();
         filters[0].state = 5;
         return await this.search("", page, filters);
+        } catch (_) { return { list: [], hasNextPage: false }; }
     }
+
 
     getImageUrl(id) { return `https://temp.compsci88.com/cover/normal/${id}.webp`; }
 
     async search(query, page, filters) {
+        try {
         var offset = 32 * (parseInt(page) - 1);
         var sort = filters && filters[0] && filters[0].values ? filters[0].values[filters[0].state].value : "Best Match";
         var order = filters && filters[1] && filters[1].values ? filters[1].values[filters[1].state].value : "Ascending";
@@ -83,7 +90,9 @@ class DefaultExtension extends MProvider {
         var nextBtn = doc.selectFirst("a[href*='page=']:contains('Next'), button:contains('Next'), a[rel='next']");
         var hasNextPage = !!nextBtn;
         return { list, hasNextPage };
+        } catch (_) { return { list: [], hasNextPage: false }; }
     }
+
 
     statusCode(status) {
         return {
@@ -95,6 +104,7 @@ class DefaultExtension extends MProvider {
     }
 
     async getDetail(url) {
+        try {
         var cleanPath = url.replace(/^https?:\/\/[^\/]+/, '');
         if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
         var slug = cleanPath.startsWith('/series/') ? cleanPath : '/series' + cleanPath;
@@ -174,9 +184,12 @@ class DefaultExtension extends MProvider {
             }
         }
         return { name: seriesTitle, title: "", description, imageUrl, author, genre, status, chapters };
+        } catch (_) { return { name: "", description: "", imageUrl: "", chapters: [] }; }
     }
 
+
     async getPageList(url) {
+        try {
         var clean = url.replace(/^https?:\/\/[^\/]+/, '');
         // Extract ULID chapter ID robustly (case-insensitive)
         var chapMatch = clean.match(/\/chapters\/([a-zA-Z0-9]{26})/i);
@@ -196,7 +209,9 @@ class DefaultExtension extends MProvider {
         }
 
         return urls.map(x => ({ url: x, headers: { Referer: `${this.source.baseUrl}/` } }));
+        } catch (_) { return []; }
     }
+
 
     getFilterList() {
         return [
