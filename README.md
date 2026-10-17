@@ -40,4 +40,4 @@ Remote catalog is the single source of truth since Sunfire 4.0.0
 (`assets/extensions/` removed). After bumping JS + `index.json`,
 verify `sha256`/`size` with `sha256sum` + `stat -c%s` before push.
 
-Sunfire app version that consumes these sources: **4.0.0**.
+Sunfire app version that consumes these sources: **6.2.0**.
